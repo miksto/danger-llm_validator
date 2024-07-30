@@ -8,40 +8,103 @@ module Danger
       expect(Danger::DangerGptchecker.new(nil)).to be_a Danger::Plugin
     end
 
-    #
-    # You should test your custom attributes and methods here
-    #
+    it 'reads a file' do
+      file_path = 'test.txt'
+      file_content = 'This is a test file content'
+
+      # Mocking File.read
+      allow(File).to receive(:read).with(file_path).and_return(file_content)
+
+      # Your code that reads the file
+      result = File.read(file_path)
+
+      expect(result).to eq(file_content)
+    end
+
     describe "with Dangerfile" do
       before do
         @dangerfile = testing_dangerfile
         @my_plugin = @dangerfile.gptchecker
 
+        use_open_ai = false
+        if use_open_ai
+          @my_plugin.llm_model = "gpt-4o-mini"
+        else
+          @my_plugin.llm_model = "llama3"
+        end
+
+        @my_plugin.temperature = 0.0
+
+        @my_plugin.configure_api do |config|
+          if use_open_ai
+            config.access_token = ENV.fetch("OPENAI_ACCESS_TOKEN")
+          else
+            config.uri_base = "http://127.0.0.1:11434"
+          end
+          config.log_errors = true # Highly recommended in development, so you can see what errors OpenAI is returning. Not recommended in production because it could leak private data to your logs.
+        end
+
         # mock the PR data
         # you can then use this, eg. github.pr_author, later in the spec
-        json = File.read("#{File.dirname(__FILE__)}/support/fixtures/github_pr.json") # example json: `curl https://api.github.com/repos/danger/danger-plugin-template/pulls/18 > github_pr.json`
-        allow(@my_plugin.github).to receive(:pr_json).and_return(json)
+        #json = File.read("#{File.dirname(__FILE__)}/support/fixtures/github_pr.json") # example json: `curl https://api.github.com/repos/danger/danger-plugin-template/pulls/18 > github_pr.json`
+        #allow(@my_plugin.github).to receive(:pr_json).and_return(json)
       end
 
-      # Some examples for writing tests
-      # You should replace these with your own.
+      # it "Sets correct metadata" do
+      #   allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(
+      #     [
+      #       "src/main/kotlin/com/gptchecker/plugin/AddedFile1.kt",
+      #       "src/main/kotlin/com/gptchecker/plugin/AddedFile2.kt"
+      #     ]
+      #   )
+      #   allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return(
+      #     [
+      #       "src/main/kotlin/com/gptchecker/plugin/ModifiedFile1.kt",
+      #       "src/main/kotlin/com/gptchecker/plugin/ModifiedFile2.kt"
+      #     ]
+      #   )
+      #   allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:deleted_files).and_return(
+      #     [
+      #       "src/main/kotlin/com/gptchecker/plugin/ModifiedFile1.kt",
+      #       "src/main/kotlin/com/gptchecker/plugin/ModifiedFile2.kt"
+      #     ]
+      #   )
+      #   file_content = File.read("spec/support/fixtures/HelloWorldWithErrors.kt")
+      #   allow(File).to receive(:read).and_return(file_content)
+      #
+      #   @my_plugin.checks = [
+      #     "Comments match what the code actually does",
+      #     "Variable names match the content they are assigned"
+      #   ]
+      #
+      #   @my_plugin.check
+      # end
 
-      it "Warns on a monday" do
-        monday_date = Date.parse("2016-07-11")
-        allow(Date).to receive(:today).and_return monday_date
+      it "Check erroneous file" do
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/gptchecker/plugin/HelloWorld.kt"])
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
+        file_content = File.readlines("spec/support/fixtures/HelloWorldWithErrors.kt")
+        allow(File).to receive(:readlines).and_return(file_content)
 
-        @my_plugin.warn_on_mondays
+        @my_plugin.checks = [
+          "Comments match what the code actually does",
+          "Variable names match the content they are assigned"
+        ]
 
-        expect(@dangerfile.status_report[:warnings]).to eq(["Trying to merge code on a Monday"])
+        @my_plugin.check
       end
-
-      it "Does nothing on a tuesday" do
-        monday_date = Date.parse("2016-07-12")
-        allow(Date).to receive(:today).and_return monday_date
-
-        @my_plugin.warn_on_mondays
-
-        expect(@dangerfile.status_report[:warnings]).to eq([])
-      end
+      #
+      # it "Check correct file" do
+      #   allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["spec/support/fixtures/HelloWorld2.kt"])
+      #   allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
+      #
+      #   @my_plugin.checks = [
+      #     "Comments match what the code actually does",
+      #     "Variable names match the content they are assigned"
+      #   ]
+      #
+      #   @my_plugin.check
+      # end
     end
   end
 end
