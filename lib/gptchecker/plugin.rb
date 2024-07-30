@@ -32,41 +32,16 @@ module Danger
               checks.map.with_index(1) { |line, index| "  #{index}. #{line}" }.join("\n") + "\n\n" \
               "You should review the content between FILE_CONTENT_BEGIN and FILE_CONTENT_END, but may draw conclusions based on the content between METADATA_BEGIN and METADATA_EN.\n" \
               "Each line between FILE_CONTENT_BEGIN and FILE_CONTENT_END is prefixed with the line number.\n" \
-              "You must respond with a json structure adhering to this json schema:\n" \
+              "You must respond according to this JSON format:\n" \
               "{\n" +
-              "    \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +
-              "    \"type\": \"object\",\n" +
-              "    \"properties\": {\n" +
-              "      \"comments\": {\n" +
-              "        \"type\": \"array\",\n" +
-              "        \"items\": [\n" +
-              "          {\n" +
-              "            \"type\": \"object\",\n" +
-              "            \"properties\": {\n" +
-              "              \"line_number\": {\n" +
-              "                \"type\": \"integer\"\n" +
-              "              },\n" +
-              "              \"line_content\": {\n" +
-              "                \"type\": \"string\"\n" +
-              "              },\n" +
-              "              \"comment\": {\n" +
-              "                \"type\": \"string\"\n" +
-              "              }\n" +
-              "            },\n" +
-              "            \"required\": [\n" +
-              "              \"line_number\",\n" +
-              "              \"line_content\",\n" +
-              "              \"comment\"\n" +
-              "            ]\n" +
-              "          }\n" +
-              "        ]\n" +
-              "      }\n" +
-              "    },\n" +
-              "    \"required\": [\n" +
-              "      \"issues\"\n" +
-              "    ]\n" +
-              "  }\n" +
-              "However, if no issues are found, only respond with empty string.\n" \
+              "  \"comments\": [\n" +
+              "    { \n" +
+              "      \"line_number\": 1, \n" +
+              "      \"line_content\": \"line content\", \n" +
+              "      \"comment\": \"desciption of issue and suggested fix\" }\n" +
+              "  ]\n" +
+              "}\n" +
+              "However, if no issues are found respond with an empty issues array.\n" \
         },
         {
           role: "user",

@@ -93,18 +93,20 @@ module Danger
 
         @my_plugin.check
       end
-      #
-      # it "Check correct file" do
-      #   allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["spec/support/fixtures/HelloWorld2.kt"])
-      #   allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
-      #
-      #   @my_plugin.checks = [
-      #     "Comments match what the code actually does",
-      #     "Variable names match the content they are assigned"
-      #   ]
-      #
-      #   @my_plugin.check
-      # end
+
+      it "Check correct file" do
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/gptchecker/plugin/HelloWorld.kt"])
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
+        file_content = File.readlines("spec/support/fixtures/HelloWorld2.kt")
+        allow(File).to receive(:readlines).and_return(file_content)
+
+        @my_plugin.checks = [
+          "Comments match what the code actually does",
+          "Variable names match the content they are assigned"
+        ]
+
+        @my_plugin.check
+      end
     end
   end
 end
