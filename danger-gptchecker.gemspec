@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["micke@stockman.se"]
   spec.description   = "A short description of danger-gptchecker."
   spec.summary       = "A longer description of danger-gptchecker."
-  spec.homepage      = "https://github.com/Mikael Stockman/danger-gptchecker"
+  spec.homepage      = "https://github.com/miksto/danger-gptchecker/"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
