@@ -13,7 +13,7 @@ module Danger
         @dangerfile = testing_dangerfile
         @my_plugin = @dangerfile.gptchecker
 
-        use_open_ai = false
+        use_open_ai = true
         if use_open_ai
           @my_plugin.llm_model = "gpt-4o-mini"
         else
@@ -49,10 +49,14 @@ module Danger
           "Variable names match the content they are assigned"
         ]
 
-        @my_plugin.check
+        @my_plugin.check_files
       end
 
       it "Check correct file" do
+        git = Git.open('/Users/miksto/project/danger-openai-plugin')
+        diff = git.diff
+
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(diff)
         allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/gptchecker/plugin/HelloWorld.kt"])
         allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
         file_content = File.readlines("spec/support/fixtures/HelloWorld2.kt")
@@ -63,7 +67,7 @@ module Danger
           "Variable names match the content they are assigned"
         ]
 
-        @my_plugin.check_files
+        @my_plugin.check
       end
 
       it "It submits chunks" do

@@ -16,20 +16,20 @@ module Danger
     end
 
     def check_annotated_hunks
-      diff.each do |diff_file|
+      git.diff.each do |diff_file|
         hunks = diff_file.patch.split(/^@@/).reject(&:empty?).map { |hunk| "@@#{hunk}" }.drop(1)
 
         hunks_for_review = []
 
         prefixed_file_content = prefix_modified_lines_line_number_only(diff_file.path)
-
+        context_extra = 10
         hunks.each do |hunk|
           parsed_header = parse_diff_header(hunk.lines.first)
-          hunk_start = [(parsed_header[:new_start] - 1 - 5), 0].max
-          hunk_end = [(parsed_header[:new_end] - 1 + 5), (prefixed_file_content.lines.count - 1)].min
+          hunk_start = [(parsed_header[:new_start] - 1 - context_extra), 0].max
+          hunk_end = [(parsed_header[:new_end] - 1 + context_extra), (prefixed_file_content.lines.count - 1)].min
 
           hunk_to_review = prefixed_file_content.lines[hunk_start..hunk_end]
-          hunks_for_review << hunk_to_review
+          hunks_for_review << hunk_to_review.join
         end
 
         hunks_for_review.each do |hunk|
@@ -61,9 +61,8 @@ module Danger
     end
 
     def check_files
-      git = Git.open('/Users/miksto/project/danger-openai-plugin')
-      modified_files.each do |diff_file|
-        check_file(diff_file.path)
+      (git.added_files + git.modified_files).each do |file|
+        check_file(file)
       end
     end
 
