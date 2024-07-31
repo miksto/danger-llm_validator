@@ -8,19 +8,6 @@ module Danger
       expect(Danger::DangerGptchecker.new(nil)).to be_a Danger::Plugin
     end
 
-    it 'reads a file' do
-      file_path = 'test.txt'
-      file_content = 'This is a test file content'
-
-      # Mocking File.read
-      allow(File).to receive(:read).with(file_path).and_return(file_content)
-
-      # Your code that reads the file
-      result = File.read(file_path)
-
-      expect(result).to eq(file_content)
-    end
-
     describe "with Dangerfile" do
       before do
         @dangerfile = testing_dangerfile
@@ -48,6 +35,54 @@ module Danger
         # you can then use this, eg. github.pr_author, later in the spec
         #json = File.read("#{File.dirname(__FILE__)}/support/fixtures/github_pr.json") # example json: `curl https://api.github.com/repos/danger/danger-plugin-template/pulls/18 > github_pr.json`
         #allow(@my_plugin.github).to receive(:pr_json).and_return(json)
+      end
+
+
+      it "Check erroneous file" do
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/gptchecker/plugin/HelloWorld.kt"])
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
+        file_content = File.readlines("spec/support/fixtures/HelloWorldWithErrors.kt")
+        allow(File).to receive(:readlines).and_return(file_content)
+
+        @my_plugin.checks = [
+          "Comments match what the code actually does",
+          "Variable names match the content they are assigned"
+        ]
+
+        @my_plugin.check
+      end
+
+      it "Check correct file" do
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/gptchecker/plugin/HelloWorld.kt"])
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
+        file_content = File.readlines("spec/support/fixtures/HelloWorld2.kt")
+        allow(File).to receive(:readlines).and_return(file_content)
+
+        @my_plugin.checks = [
+          "Comments match what the code actually does",
+          "Variable names match the content they are assigned"
+        ]
+
+        @my_plugin.check_files
+      end
+
+      it "It submits chunks" do
+        # allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/gptchecker/plugin/HelloWorld.kt"])
+        # allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
+        # file_content = File.readlines("spec/support/fixtures/HelloWorld2.kt")
+        # allow(File).to receive(:readlines).and_return(file_content)
+
+        git = Git.open('/Users/miksto/project/danger-openai-plugin')
+        diff = git.diff
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(nil)
+
+
+        @my_plugin.checks = [
+          "Comments match what the code actually does",
+          "Variable names match the content they are assigned"
+        ]
+
+        @my_plugin.check
       end
 
       # it "Sets correct metadata" do
@@ -79,34 +114,6 @@ module Danger
       #
       #   @my_plugin.check
       # end
-
-      it "Check erroneous file" do
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/gptchecker/plugin/HelloWorld.kt"])
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
-        file_content = File.readlines("spec/support/fixtures/HelloWorldWithErrors.kt")
-        allow(File).to receive(:readlines).and_return(file_content)
-
-        @my_plugin.checks = [
-          "Comments match what the code actually does",
-          "Variable names match the content they are assigned"
-        ]
-
-        @my_plugin.check
-      end
-
-      it "Check correct file" do
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/gptchecker/plugin/HelloWorld.kt"])
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
-        file_content = File.readlines("spec/support/fixtures/HelloWorld2.kt")
-        allow(File).to receive(:readlines).and_return(file_content)
-
-        @my_plugin.checks = [
-          "Comments match what the code actually does",
-          "Variable names match the content they are assigned"
-        ]
-
-        @my_plugin.check
-      end
     end
   end
 end
