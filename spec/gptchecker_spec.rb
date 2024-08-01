@@ -49,7 +49,7 @@ module Danger
           "Variable names match the content they are assigned"
         ]
 
-        @my_plugin.check_files
+        @my_plugin.check
       end
 
       it "Check correct file" do
