@@ -1,3 +1,3 @@
 # frozen_string_literal: true
 
-require "gptchecker/plugin"
+require "llm_validator/plugin"

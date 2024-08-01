@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    danger-gptchecker (0.0.1)
+    danger-llm_validator (0.0.1)
       danger-plugin-api (~> 1.0)
       ruby-openai (~> 7.1)
 
@@ -154,7 +154,7 @@ PLATFORMS
 
 DEPENDENCIES
   bundler (~> 2.0)
-  danger-gptchecker!
+  danger-llm_validator!
   guard (~> 2.14)
   guard-rspec (~> 4.7)
   listen (= 3.0.7)

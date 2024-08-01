@@ -9,14 +9,20 @@ require_relative "models/file_filter"
 require_relative "models/llm_response"
 
 module Danger
-  class DangerGptchecker < Plugin
-    attr_accessor :checks, :llm_model, :temperature, :diff_context_extra_lines, :include_patterns, :exclude_patterns
+  class DangerLlmValidator < Plugin
+    attr_accessor :checks
+    attr_accessor :llm_model
+    attr_accessor :temperature
+    attr_accessor :diff_context_extra_lines
+    attr_accessor :include_patterns
+    attr_accessor :exclude_pattern
+
     attr_reader :file_filter, :llm_prompter
-    private :file_filter
+    private :file_filter, :llm_prompter
 
     def initialize(dangerfile)
       super(dangerfile)
-      @diff_context_extra_lines = 0
+      @diff_context_extra_lines = 5
       @temperature = 0.0
       @include_patterns = []
       @exclude_patterns = []

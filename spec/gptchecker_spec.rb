@@ -3,15 +3,15 @@
 require File.expand_path("spec_helper", __dir__)
 
 module Danger
-  describe Danger::DangerGptchecker do
+  describe Danger::DangerLlmValidator do
     it "should be a plugin" do
-      expect(Danger::DangerGptchecker.new(nil)).to be_a Danger::Plugin
+      expect(Danger::DangerLlmValidator.new(nil)).to be_a Danger::Plugin
     end
 
     describe "with Dangerfile" do
       before do
         @dangerfile = testing_dangerfile
-        @my_plugin = @dangerfile.gptchecker
+        @my_plugin = @dangerfile.llm_validator
 
         use_open_ai = false
         if use_open_ai
@@ -39,7 +39,7 @@ module Danger
 
 
       it "Check erroneous file" do
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/gptchecker/plugin/HelloWorld.kt"])
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/llmvalidator/plugin/HelloWorld.kt"])
         allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
         file_content = File.readlines("spec/support/fixtures/HelloWorldWithErrors.kt")
         allow(File).to receive(:readlines).and_return(file_content)
@@ -57,7 +57,7 @@ module Danger
         diff = git.diff
 
         allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(diff)
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/gptchecker/plugin/HelloWorld.kt"])
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/llmvalidator/plugin/HelloWorld.kt"])
         allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
         file_content = File.readlines("spec/support/fixtures/HelloWorld2.kt")
         allow(File).to receive(:readlines).and_return(file_content)
@@ -73,13 +73,12 @@ module Danger
       end
 
       it "It submits chunks" do
-        # allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/gptchecker/plugin/HelloWorld.kt"])
+        # allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/llmvalidator/plugin/HelloWorld.kt"])
         # allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
         # file_content = File.readlines("spec/support/fixtures/HelloWorld2.kt")
         # allow(File).to receive(:readlines).and_return(file_content)
 
         git = Git.open('/Users/miksto/project/danger-openai-plugin')
-        diff = git.diff
         allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(nil)
 
 
@@ -90,36 +89,6 @@ module Danger
 
         @my_plugin.check
       end
-
-      # it "Sets correct metadata" do
-      #   allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(
-      #     [
-      #       "src/main/kotlin/com/gptchecker/plugin/AddedFile1.kt",
-      #       "src/main/kotlin/com/gptchecker/plugin/AddedFile2.kt"
-      #     ]
-      #   )
-      #   allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return(
-      #     [
-      #       "src/main/kotlin/com/gptchecker/plugin/ModifiedFile1.kt",
-      #       "src/main/kotlin/com/gptchecker/plugin/ModifiedFile2.kt"
-      #     ]
-      #   )
-      #   allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:deleted_files).and_return(
-      #     [
-      #       "src/main/kotlin/com/gptchecker/plugin/ModifiedFile1.kt",
-      #       "src/main/kotlin/com/gptchecker/plugin/ModifiedFile2.kt"
-      #     ]
-      #   )
-      #   file_content = File.read("spec/support/fixtures/HelloWorldWithErrors.kt")
-      #   allow(File).to receive(:read).and_return(file_content)
-      #
-      #   @my_plugin.checks = [
-      #     "Comments match what the code actually does",
-      #     "Variable names match the content they are assigned"
-      #   ]
-      #
-      #   @my_plugin.check
-      # end
     end
   end
 end

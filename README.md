@@ -1,15 +1,15 @@
-# danger-gptchecker
+# danger-llm_validator
 
-A description of danger-gptchecker.
+A description of danger-llm_validator.
 
 ## Installation
 
-    $ gem install danger-gptchecker
+    $ gem install danger-llm_validator
 
 ## Usage
 
     Methods and attributes from this plugin are available in
-    your `Dangerfile` under the `gptchecker` namespace.
+    your `Dangerfile` under the `llm_validator` namespace.
 
 ## Development
 

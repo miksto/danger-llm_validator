@@ -2,16 +2,16 @@
 
 lib = File.expand_path("lib", __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "gptchecker/gem_version"
+require "llm_validator/gem_version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "danger-gptchecker"
-  spec.version       = Gptchecker::VERSION
+  spec.name          = "danger-llm_validator"
+  spec.version       = LlmValidator::VERSION
   spec.authors       = ["Mikael Stockman"]
   spec.email         = ["micke@stockman.se"]
-  spec.description   = "A short description of danger-gptchecker."
-  spec.summary       = "A longer description of danger-gptchecker."
-  spec.homepage      = "https://github.com/miksto/danger-gptchecker/"
+  spec.description   = "Specify fuzzy rules in natural language and let an LLM enforce them."
+  spec.summary       = "Specify fuzzy rules in natural language and let an LLM enforce them."
+  spec.homepage      = "https://github.com/miksto/danger-llm_validator/"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)

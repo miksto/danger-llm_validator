@@ -2,5 +2,5 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in danger-gptchecker.gemspec
+# Specify your gem's dependencies in danger-llm_validator.gemspec
 gemspec
