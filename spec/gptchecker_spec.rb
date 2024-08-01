@@ -13,7 +13,7 @@ module Danger
         @dangerfile = testing_dangerfile
         @my_plugin = @dangerfile.gptchecker
 
-        use_open_ai = true
+        use_open_ai = false
         if use_open_ai
           @my_plugin.llm_model = "gpt-4o-mini"
         else
@@ -66,6 +66,8 @@ module Danger
           "Comments match what the code actually does",
           "Variable names match the content they are assigned"
         ]
+        @my_plugin.exclude_patterns = ["*.rb"]
+        @my_plugin.diff_context_extra_lines = 10
 
         @my_plugin.check
       end

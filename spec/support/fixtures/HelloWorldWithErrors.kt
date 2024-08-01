@@ -8,7 +8,7 @@ fun main() {
         println("Hello, World!")
     }
 
-    val numberOfTurns = "Error message prefix"
 
+    val numberOfTurns = "Error message prefix"
     println(numberOfTurns)
 }
