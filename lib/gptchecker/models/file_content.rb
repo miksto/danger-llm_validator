@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
+# Holds a an array of chunks to send for review
 class FileContent
-  attr_reader :file_path, :content
+  attr_reader :file_path, :hunks
 
-  def initialize(file_path:, content:)
+  def initialize(file_path:, hunks:)
     @file_path = file_path
-    @content = content
+    @hunks = hunks
   end
 end

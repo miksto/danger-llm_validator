@@ -26,18 +26,20 @@ module Danger
     end
 
     def check
-      file_filter = FileFilter.new(include_patterns: @include_patterns, exclude_patterns: @exclude_patterns)
+      file_filter = FileFilter.new(include_patterns: include_patterns, exclude_patterns: exclude_patterns)
       hunk_content_list = HunkContentBuilder.new(
         git: git,
         file_filter: file_filter,
         diff_context_extra_lines: diff_context_extra_lines
       ).build_file_contents
-
+      prompt_builder = PromptBuilder.new(checks)
       hunk_content_list.each do |file_content|
-        prompt_messages = PromptBuilder.new(checks, file_content).build_prompt_messages
-        llm_response_text = prompt_llm(prompt_messages)
-        llm_response = LlmResponse.from_json(llm_response_text)
-        apply_comments(file_path: file_content.file_path, comments: llm_response.comments)
+        file_content.hunks.each do |hunk|
+          prompt_messages = prompt_builder.build_prompt_messages(file_path: file_content.file_path, hunk: hunk)
+          llm_response_text = prompt_llm(prompt_messages)
+          llm_response = LlmResponse.from_json(llm_response_text)
+          apply_comments(file_path: file_content.file_path, comments: llm_response.comments)
+        end
       end
     end
 
@@ -61,6 +63,7 @@ module Danger
 
     def apply_comments(file_path:, comments:)
       comments.each do |comment|
+        puts " - #{comment.comment}"
         warn(
           comment.comment,
           file: file_path,

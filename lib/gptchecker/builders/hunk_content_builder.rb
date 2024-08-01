@@ -16,17 +16,19 @@ class HunkContentBuilder
 
   # Returns a list of #FileContent
   def build_file_contents
-    git.diff.select { |file| file_filter.allowed?(file.path) }.map do |diff_file|
-      diff_headers = diff_file.patch.lines.select do |line|
-        line.match(/^@@ -\d+,\d+ \+\d+,\d+ @@/)
-      end
+    diff_files_to_process = git.diff.select { |file| file_filter.allowed?(file.path) }
+    diff_files_to_process.map do |diff_file|
+      # Prepare a list of all file lines prefixed with its line number
+      prefixed_file_content = prefix_file_lines_with_line_number(file_path: diff_file.path)
 
-      prefixed_file_content = file_lines_prefixed_with_line_number(file_path: diff_file.path)
+      # Get a list of all diff headers
+      diff_headers = diff_file.patch.lines.select { |line| DiffHeader.valid_header?(line) }
 
+      # Extract hunks from prefixed_file_content based on the diff_headers
       hunks_for_review = diff_headers.map do |diff_header|
         extract_file_lines_for_diff_header(file_lines: prefixed_file_content, diff_header_line: diff_header).join
       end
-      FileContent.new(file_path: diff_file.path, content: hunks_for_review)
+      FileContent.new(file_path: diff_file.path, hunks: hunks_for_review)
     end
   end
 
@@ -42,7 +44,7 @@ class HunkContentBuilder
   end
 
   # Returns an #Array<String> of lines in the file prefixed with their respective line number
-  def file_lines_prefixed_with_line_number(file_path:)
+  def prefix_file_lines_with_line_number(file_path:)
     File.foreach(file_path).with_index(1).map do |line, line_number|
       "#{line_number}: #{line}"
     end
