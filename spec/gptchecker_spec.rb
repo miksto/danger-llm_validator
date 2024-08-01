@@ -66,26 +66,22 @@ module Danger
           "Comments match what the code actually does",
           "Variable names match the content they are assigned"
         ]
-        @my_plugin.exclude_patterns = ["*.rb"]
+        #@my_plugin.exclude_patterns = ["**/src/**/*.rb"]
         @my_plugin.diff_context_extra_lines = 10
 
         @my_plugin.check
       end
 
       it "It submits chunks" do
-        # allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/llmvalidator/plugin/HelloWorld.kt"])
-        # allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
-        # file_content = File.readlines("spec/support/fixtures/HelloWorld2.kt")
-        # allow(File).to receive(:readlines).and_return(file_content)
-
         git = Git.open('/Users/miksto/project/danger-openai-plugin')
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(nil)
+        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(git.diff)
 
 
         @my_plugin.checks = [
           "Comments match what the code actually does",
           "Variable names match the content they are assigned"
         ]
+        @my_plugin.exclude_patterns = ["*.rb"]
 
         @my_plugin.check
       end

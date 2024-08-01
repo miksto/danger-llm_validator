@@ -4,15 +4,18 @@ require "openai"
 require "git"
 
 module Danger
-
-  # Write rules in natural natural language and let an LLM validate the code accordingly.
+  # Write rules in natural language, and let an LLM ensure they are followed.
+  # You can either run the LLM locally, such as with Ollama, or use one of the OpenAI models.
+  #
   # @example Configure to use OpenAI
   #          llm_validator.configure_api do |config|
   #            config.access_token = ENV.fetch("OPENAI_ACCESS_TOKEN")
-  #            config.organization_id = ENV.fetch("OPENAI_ORGANIZATION_ID") # Optional
-  #            config.log_errors = true # Highly recommended in development, so you can see what errors OpenAI is returning. Not recommended in production because it could leak private data to your logs.
   #          end
   #          llm_validator.llm_model = "gpt-4o-mini"
+  #          llm_validator.checks = [
+  #            "Comments match what the code actually does",
+  #            "Variable names match the content they are assigned"
+  #          ]
   #          llm_validator.check
   #
   # @example Configure to use a locally running Ollama server
@@ -21,6 +24,11 @@ module Danger
   #          end
   #          llm_validator.llm_model = "llama3"
   #          llm_validator.check
+  #
+  # @example Other configuration options
+  #          llm_validator.include_patterns = ["*.kt"]
+  #          llm_validator.exclude_patterns = ["src/**/*.rb"]
+  #          llm_validator.diff_context_extra_lines = 10
   class DangerLlmValidator < Plugin
     # A list of checks to be performed by the validator
     #
@@ -83,6 +91,7 @@ module Danger
       llm_prompter = LlmPrompter.new(llm_model: llm_model, temperature: temperature)
 
       hunk_content_list.each do |file_content|
+        puts "processing: #{file_content.file_path}"
         file_content.hunks.each do |hunk|
           prompt_messages = prompt_builder.build_prompt_messages(file_path: file_content.file_path, hunk: hunk)
           llm_response = llm_prompter.chat(prompt_messages)
