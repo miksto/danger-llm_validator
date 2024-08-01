@@ -81,7 +81,6 @@ module Danger
           "Comments match what the code actually does",
           "Variable names match the content they are assigned"
         ]
-        @my_plugin.exclude_patterns = ["*.rb"]
 
         @my_plugin.check
       end

@@ -14,7 +14,7 @@ module Danger
 
     # Returns a list of #FileContent
     def build_file_contents
-      diff_files_to_process = git.diff.select { |file| file_filter.allowed?(file.path) }
+      diff_files_to_process = git.diff.select { |file| file_filter.allowed?(file.path) && file.type != "deleted" && !file.binary? }
       diff_files_to_process.map do |diff_file|
         # Prepare a list of all file lines prefixed with its line number
         prefixed_file_content = prefix_file_lines_with_line_number(file_path: diff_file.path)
