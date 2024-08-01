@@ -2,15 +2,16 @@
 
 require "openai"
 require "git"
-require_relative "models/file_filter"
-require_relative "builders/prompt_builder"
 require_relative "builders/hunk_content_builder"
+require_relative "builders/prompt_builder"
+require_relative "llm_prompter"
+require_relative "models/file_filter"
 require_relative "models/llm_response"
 
 module Danger
   class DangerGptchecker < Plugin
     attr_accessor :checks, :llm_model, :temperature, :diff_context_extra_lines, :include_patterns, :exclude_patterns
-    attr_reader :file_filter
+    attr_reader :file_filter, :llm_prompter
     private :file_filter
 
     def initialize(dangerfile)
@@ -22,7 +23,7 @@ module Danger
     end
 
     def configure_api(&block)
-      OpenAI.configure(&block)
+      LlmPrompter.configure(&block)
     end
 
     def check
@@ -33,11 +34,12 @@ module Danger
         diff_context_extra_lines: diff_context_extra_lines
       ).build_file_contents
       prompt_builder = PromptBuilder.new(checks)
+      llm_prompter = LlmPrompter.new(llm_model: llm_model, temperature: temperature)
+
       hunk_content_list.each do |file_content|
         file_content.hunks.each do |hunk|
           prompt_messages = prompt_builder.build_prompt_messages(file_path: file_content.file_path, hunk: hunk)
-          llm_response_text = prompt_llm(prompt_messages)
-          llm_response = LlmResponse.from_json(llm_response_text)
+          llm_response = llm_prompter.chat(prompt_messages)
           apply_comments(file_path: file_content.file_path, comments: llm_response.comments)
         end
       end
@@ -45,25 +47,9 @@ module Danger
 
     private
 
-    # Returns the returned message from the LLM
-    def prompt_llm(prompt_messages)
-      puts prompt_messages
-      client = OpenAI::Client.new
-
-      response = client.chat(
-        parameters: {
-          model: llm_model,
-          response_format: { type: "json_object" },
-          messages: prompt_messages,
-          temperature: temperature
-        }
-      )
-      response.dig("choices", 0, "message", "content")
-    end
-
     def apply_comments(file_path:, comments:)
       comments.each do |comment|
-        puts " - #{comment.comment}"
+        puts "#{file_path}:#{comment.line_number} - #{comment.comment}"
         warn(
           comment.comment,
           file: file_path,
