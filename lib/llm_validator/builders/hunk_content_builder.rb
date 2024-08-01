@@ -2,7 +2,6 @@
 
 module Danger
   class HunkContentBuilder
-
     attr_reader :file_filter, :git, :diff_context_extra_lines
     private :file_filter, :git, :diff_context_extra_lines
 

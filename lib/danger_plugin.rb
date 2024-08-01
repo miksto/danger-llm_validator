@@ -8,4 +8,3 @@ require "llm_validator/models/diff_header"
 require "llm_validator/models/file_content"
 require "llm_validator/models/file_filter"
 require "llm_validator/models/llm_response"
-

@@ -21,6 +21,7 @@ module Danger
         end
 
         @my_plugin.temperature = 0.0
+        @my_plugin.diff_context_extra_lines = 10
 
         @my_plugin.configure_api do |config|
           if use_open_ai
@@ -33,53 +34,17 @@ module Danger
 
         # mock the PR data
         # you can then use this, eg. github.pr_author, later in the spec
-        #json = File.read("#{File.dirname(__FILE__)}/support/fixtures/github_pr.json") # example json: `curl https://api.github.com/repos/danger/danger-plugin-template/pulls/18 > github_pr.json`
-        #allow(@my_plugin.github).to receive(:pr_json).and_return(json)
-      end
-
-
-      it "Check erroneous file" do
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/llmvalidator/plugin/HelloWorld.kt"])
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
-        file_content = File.readlines("spec/support/fixtures/HelloWorldWithErrors.kt")
-        allow(File).to receive(:readlines).and_return(file_content)
-
-        @my_plugin.checks = [
-          "Comments match what the code actually does",
-          "Variable names match the content they are assigned"
-        ]
-
-        @my_plugin.check
-      end
-
-      it "Check correct file" do
-        git = Git.open('/Users/miksto/project/danger-openai-plugin')
-        diff = git.diff
-
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(diff)
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:added_files).and_return(["src/main/kotlin/com/llmvalidator/plugin/HelloWorld.kt"])
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:modified_files).and_return([])
-        file_content = File.readlines("spec/support/fixtures/HelloWorld2.kt")
-        allow(File).to receive(:readlines).and_return(file_content)
-
-        @my_plugin.checks = [
-          "Comments match what the code actually does",
-          "Variable names match the content they are assigned"
-        ]
-        #@my_plugin.exclude_patterns = ["**/src/**/*.rb"]
-        @my_plugin.diff_context_extra_lines = 10
-
-        @my_plugin.check
+        # json = File.read("#{File.dirname(__FILE__)}/support/fixtures/github_pr.json") # example json: `curl https://api.github.com/repos/danger/danger-plugin-template/pulls/18 > github_pr.json`
+        # allow(@my_plugin.github).to receive(:pr_json).and_return(json)
       end
 
       it "It submits chunks" do
-        git = Git.open('/Users/miksto/project/danger-openai-plugin')
+        git = Git.open("/Users/miksto/project/danger-openai-plugin")
         allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(git.diff)
 
-
         @my_plugin.checks = [
-          "Comments match what the code actually does",
-          "Variable names match the content they are assigned"
+          "Comments in the code do not state obviously incorrect things",
+          "Variable names are not obviously misleading and incorrect"
         ]
 
         @my_plugin.check

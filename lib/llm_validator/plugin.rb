@@ -29,6 +29,9 @@ module Danger
   #          llm_validator.include_patterns = ["*.kt"]
   #          llm_validator.exclude_patterns = ["src/**/*.rb"]
   #          llm_validator.diff_context_extra_lines = 10
+  #
+  # @see miksto/danger-llm_validator
+  # @tags validation, chatgpt, llm, openai
   class DangerLlmValidator < Plugin
     # A list of checks to be performed by the validator
     #
@@ -62,7 +65,16 @@ module Danger
     # @return [Array<String>]
     attr_accessor :exclude_patterns
 
-    attr_reader :file_filter, :llm_prompter
+    # A FileFilter used to check if a file should be processed or not
+    #
+    # @return [FileFilter]
+    attr_reader :file_filter
+
+    # A wrapper around the OpenAI class exposing a minimal set of functions.
+    # Handles prompting the LLM and parsing the response message.
+    #
+    # @return [LlmPrompter]
+    attr_reader :llm_prompter
     private :file_filter, :llm_prompter
 
     def initialize(dangerfile)
@@ -75,11 +87,13 @@ module Danger
 
     # Configure the OpenAI library to connect to the desired API endpoints etc.
     # See https://github.com/alexrudall/ruby-openai for more details on what parameters can be configured.
+    # @return [void]
     def configure_api(&block)
       LlmPrompter.configure(&block)
     end
 
     # Run the validation
+    # @return [void]
     def check
       file_filter = FileFilter.new(include_patterns: include_patterns, exclude_patterns: exclude_patterns)
       hunk_content_list = HunkContentBuilder.new(
@@ -95,7 +109,9 @@ module Danger
         file_content.hunks.each do |hunk|
           prompt_messages = prompt_builder.build_prompt_messages(file_path: file_content.file_path, hunk: hunk)
           llm_response = llm_prompter.chat(prompt_messages)
-          apply_comments(file_path: file_content.file_path, comments: llm_response.comments)
+          unless llm_response.nil?
+            apply_comments(file_path: file_content.file_path, comments: llm_response.comments)
+          end
         end
       end
     end

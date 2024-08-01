@@ -46,6 +46,5 @@ module Danger
     def build_user_content(file_path:, hunk:)
       "METADATA_BEGIN\nfile_path : #{file_path}\nMETADATA_END\nCONTENT_BEGIN\n#{hunk}\nCONTENT_END\n"
     end
-
   end
 end
