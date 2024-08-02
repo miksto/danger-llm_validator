@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    danger-llm_validator (0.0.1)
+    danger-llm_validator (0.0.2)
       danger-plugin-api (~> 1.0)
       ruby-openai (~> 7.1)
 
