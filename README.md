@@ -66,14 +66,13 @@ See https://github.com/alexrudall/ruby-openai for more details on what parameter
 Creates warnings for all comments received from the LLM.
 
 
-## Installation
-
-    $ gem install danger-llm_validator
-
 ## Usage
 
-    Methods and attributes from this plugin are available in
-    your `Dangerfile` under the `llm_validator` namespace.
+Add the following your gemfile
+
+    gem "danger-llm_validator", git: 'https://github.com/miksto/danger-llm_validator.git'
+
+Methods and attributes from this plugin are available in your `Dangerfile` under the `llm_validator` namespace.
 
 ## Development
 
