@@ -35,24 +35,26 @@ module Danger
         # allow(@my_plugin.github).to receive(:pr_json).and_return(json)
       end
 
-      it "It submits chunks" do
-        git = Git.open("/Users/miksto/project/danger-openai-plugin")
-        allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(git.diff)
-        @my_plugin.checks = [
-          "Comments in the code do not state obviously incorrect things",
-          "Variable names are not clearly misleading and incorrect"
-        ]
-
-        @my_plugin.check
-
-        @my_plugin.validation_errors.each do |message|
-          puts message
-        end
-
-        @my_plugin.llm_responses.each do |response|
-          puts response.prompt_messages[1]
-        end
-      end
+      # it "It submits chunks" do
+      #   git = Git.open("/Users/miksto/project/danger-openai-plugin")
+      #   allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(git.diff)
+      #   @my_plugin.checks = [
+      #     "Comments in the code do not state obviously incorrect things",
+      #     "Variable names are not clearly misleading and incorrect"
+      #   ]
+      #
+      #   @my_plugin.check
+      #
+      #   @my_plugin.validation_errors.each do |message|
+      #     puts message
+      #   end
+      #
+      #   @my_plugin.llm_responses.each do |response|
+      #     puts response.prompt_messages
+      #     puts response.raw_response
+      #     puts "---"
+      #   end
+      # end
     end
   end
 end
