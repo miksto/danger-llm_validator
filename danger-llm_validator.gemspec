@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "danger-plugin-api", "~> 1.0"
   spec.add_runtime_dependency "ruby-openai", "~> 7.1"
+  spec.add_runtime_dependency "ffi", "1.16.3"
 
   # General ruby development
   spec.add_development_dependency "bundler", "~> 2.0"

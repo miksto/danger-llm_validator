@@ -4,7 +4,7 @@ module Danger
   class DiffHeader
     attr_reader :original_start, :original_end, :original_count, :new_start, :new_end, :new_count
 
-    DIFF_HEADER_REGEXP = /@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@/.freeze
+    DIFF_HEADER_REGEXP = /@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@/
 
     def initialize(original_count:, new_start:, new_count:, original_start:)
       @original_start = original_start
