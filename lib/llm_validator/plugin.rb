@@ -69,7 +69,12 @@ module Danger
     # @return [Array<LlmResponse>]
     attr_accessor :llm_responses
 
-    # Whether a warning should be posted if any of the validations failed. Defaults to true.
+    # An array debug messages for any error that occurred during validation.
+    #
+    # @return [Array<String>]
+    attr_accessor :validation_errors
+
+    # Whether a warning should be posted if any of the validations resulted in an error. Defaults to true.
     #
     # @return [Boolean]
     attr_accessor :warn_for_validation_errors
@@ -85,7 +90,6 @@ module Danger
       @temperature = 0.0
       @include_patterns = []
       @exclude_patterns = []
-      @llm_responses = []
       @warn_for_validation_errors = true
       @warn_for_llm_comments = true
     end
@@ -101,6 +105,9 @@ module Danger
     # Creates warnings for all comments received from the LLM.
     # @return [void]
     def check
+      self.llm_responses = []
+      self.validation_errors = []
+
       file_filter = FileFilter.new(include_patterns: include_patterns, exclude_patterns: exclude_patterns)
       hunk_content_list = HunkContentBuilder.new(
         git: git,
@@ -110,30 +117,28 @@ module Danger
       prompt_builder = PromptBuilder.new(checks)
       llm_prompter = LlmPrompter.new(llm_model: llm_model, temperature: temperature)
 
-      validation_errors = []
-
       hunk_content_list.each do |file_content|
         file_content.hunks.each do |hunk|
           prompt_messages = prompt_builder.build_prompt_messages(file_path: file_content.file_path, hunk: hunk)
-          llm_response_text = llm_prompter.chat(prompt_messages)
+          begin
+            llm_response_text = llm_prompter.chat(prompt_messages)
+            llm_response = LlmResponse.from_llm_response(
+              file_path: file_content.file_path,
+              prompt_messages: prompt_messages,
+              llm_response: llm_response_text
+            )
 
-          llm_response = LlmResponse.from_llm_response(
-            file_path: file_content.file_path,
-            prompt_messages: prompt_messages,
-            llm_response: llm_response_text
-          )
-
-          llm_responses << llm_response
-          if warn_for_llm_comments
-            warn_for_comments(file_path: file_content.file_path, comments: llm_response.comments)
+            self.llm_responses << llm_response
+            if warn_for_llm_comments
+              warn_for_comments(file_path: file_content.file_path, comments: llm_response.comments)
+            end
+          rescue StandardError => e
+            validation_errors << "Failed to validate file: #{file_content.file_path} with error: #{e}. LLM response: '#{llm_response_text}'"
           end
-        rescue StandardError => e
-          validation_errors << "Failed to validate file: #{file_content.file_path} with error: #{e}"
         end
       end
 
       if warn_for_validation_errors && !validation_errors.empty?
-        # Post a global warning if there were any errors during validation.
         warn(validation_errors.join("\n\n"))
       end
     end
@@ -142,7 +147,6 @@ module Danger
 
     def warn_for_comments(file_path:, comments:)
       comments.each do |comment|
-        puts "#{file_path}:#{comment.line_number} - #{comment.comment}"
         warn(
           comment.comment,
           file: file_path,

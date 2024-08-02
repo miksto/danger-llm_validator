@@ -48,6 +48,14 @@ module Danger
         ]
 
         @my_plugin.check
+
+        @my_plugin.validation_errors.each do |message|
+          puts message
+        end
+
+        @my_plugin.llm_responses.each do |response|
+          puts response.prompt_messages[1]
+        end
       end
     end
   end
