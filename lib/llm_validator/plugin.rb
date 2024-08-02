@@ -69,10 +69,15 @@ module Danger
     # @return [Array<LlmResponse>]
     attr_accessor :llm_responses
 
-    # Whether a warning message should be posted if any of the validations failed. Defaults to true.
+    # Whether a warning should be posted if any of the validations failed. Defaults to true.
     #
     # @return [Boolean]
     attr_accessor :warn_for_validation_errors
+
+    # Whether a warning should be posted for comments received from the LLM. Defaults to true.
+    #
+    # @return [Boolean]
+    attr_accessor :warn_for_llm_comments
 
     def initialize(dangerfile)
       super(dangerfile)
@@ -82,6 +87,7 @@ module Danger
       @exclude_patterns = []
       @llm_responses = []
       @warn_for_validation_errors = true
+      @warn_for_llm_comments = true
     end
 
     # Configure the OpenAI library to connect to the desired API endpoints etc.
@@ -118,7 +124,9 @@ module Danger
           )
 
           llm_responses << llm_response
-          apply_comments(file_path: file_content.file_path, comments: llm_response.comments)
+          if warn_for_llm_comments
+            warn_for_comments(file_path: file_content.file_path, comments: llm_response.comments)
+          end
         rescue StandardError => e
           validation_errors << "Failed to validate file: #{file_content.file_path} with error: #{e}"
         end
@@ -132,7 +140,7 @@ module Danger
 
     private
 
-    def apply_comments(file_path:, comments:)
+    def warn_for_comments(file_path:, comments:)
       comments.each do |comment|
         puts "#{file_path}:#{comment.line_number} - #{comment.comment}"
         warn(

@@ -48,7 +48,9 @@ This can help the model understand the context of the changes better.
 `llm_responses` - An array of all LLM responses that were received during validation.
 Includes extra data such as file paths and the prompt supplied to the LLM as well as the raw response from the LLM.
 
-`warn_for_validation_errors` - Whether a warning message should be posted if any of the validations failed. Defaults to true.
+`warn_for_validation_errors` - Whether a warning should be posted if any of the validations failed. Defaults to true.
+
+`warn_for_llm_comments` - Whether a warning should be posted for comments received from the LLM. Defaults to true.
 
 
 
