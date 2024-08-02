@@ -30,7 +30,7 @@ module Danger
   # @see miksto/danger-llm_validator
   # @tags validation, chatgpt, llm, openai
   class DangerLlmValidator < Plugin
-    # List of checks for the LLM to validate the code changes against.
+    # An array of checks for the LLM to validate the code changes against.
     #
     # @return [Array<String>]
     attr_accessor :checks
@@ -42,6 +42,7 @@ module Danger
 
     # The temperature setting for the language model, controlling the randomness of the output.
     # A lower value results in more deterministic output, while a higher value allows for more creativity.
+    # Defaults to 0.0 for a deterministic output.
     #
     # @return [Float]
     attr_accessor :temperature
@@ -52,15 +53,26 @@ module Danger
     # @return [Integer]
     attr_accessor :diff_context_extra_lines
 
-    # A list glob patterns for files to include in the validation
+    # An array of glob patterns for files to include in the validation.
     #
     # @return [Array<String>]
     attr_accessor :include_patterns
 
-    # A list glob patterns for files to exclude from the validation.
+    # An array of glob patterns for files to exclude from the validation.
     #
     # @return [Array<String>]
     attr_accessor :exclude_patterns
+
+    # An array of all LLM responses that were received during validation.
+    # Includes extra data such as file paths and the prompt supplied to the LLM as well as the raw response from the LLM.
+    #
+    # @return [Array<LlmResponse>]
+    attr_accessor :llm_responses
+
+    # Whether a warning message should be posted if any of the validations failed. Defaults to true.
+    #
+    # @return [Boolean]
+    attr_accessor :warn_for_validation_errors
 
     def initialize(dangerfile)
       super(dangerfile)
@@ -68,6 +80,8 @@ module Danger
       @temperature = 0.0
       @include_patterns = []
       @exclude_patterns = []
+      @llm_responses = []
+      @warn_for_validation_errors = true
     end
 
     # Configure the OpenAI library to connect to the desired API endpoints etc.
@@ -77,7 +91,8 @@ module Danger
       LlmPrompter.configure(&block)
     end
 
-    # Run the validation
+    # Run the validation. Loops over all hunks in the git diff, and prompts the LLM to validate it.
+    # Creates warnings for all comments received from the LLM.
     # @return [void]
     def check
       file_filter = FileFilter.new(include_patterns: include_patterns, exclude_patterns: exclude_patterns)
@@ -89,15 +104,29 @@ module Danger
       prompt_builder = PromptBuilder.new(checks)
       llm_prompter = LlmPrompter.new(llm_model: llm_model, temperature: temperature)
 
+      validation_errors = []
+
       hunk_content_list.each do |file_content|
-        puts "processing: #{file_content.file_path}"
         file_content.hunks.each do |hunk|
           prompt_messages = prompt_builder.build_prompt_messages(file_path: file_content.file_path, hunk: hunk)
-          llm_response = llm_prompter.chat(prompt_messages)
-          unless llm_response.nil?
-            apply_comments(file_path: file_content.file_path, comments: llm_response.comments)
-          end
+          llm_response_text = llm_prompter.chat(prompt_messages)
+
+          llm_response = LlmResponse.from_llm_response(
+            file_path: file_content.file_path,
+            prompt_messages: prompt_messages,
+            llm_response: llm_response_text
+          )
+
+          llm_responses << llm_response
+          apply_comments(file_path: file_content.file_path, comments: llm_response.comments)
+        rescue StandardError => e
+          validation_errors << "Failed to validate file: #{file_content.file_path} with error: #{e}"
         end
+      end
+
+      if warn_for_validation_errors && !validation_errors.empty?
+        # Post a global warning if there were any errors during validation.
+        warn(validation_errors.join("\n\n"))
       end
     end
 

@@ -1,4 +1,3 @@
-
 ### Danger LLM Validator
 
 Write rules in natural language, and let an LLM ensure they are followed.
@@ -31,19 +30,25 @@ llm_validator.exclude_patterns = ["src/**/*.rb"]</pre>
 
 #### Attributes
 
-`checks` - List of checks for the LLM to validate the code changes against.
+`checks` - An array of checks for the LLM to validate the code changes against.
 
 `llm_model` - The identifier of the language model to use for validation.
 
 `temperature` - The temperature setting for the language model, controlling the randomness of the output.
 A lower value results in more deterministic output, while a higher value allows for more creativity.
+Defaults to 0.0 for a deterministic output.
 
 `diff_context_extra_lines` - The number of additional context lines to include around each change in a diff.
 This can help the model understand the context of the changes better.
 
-`include_patterns` - A list glob patterns for files to include in the validation
+`include_patterns` - An array of glob patterns for files to include in the validation.
 
-`exclude_patterns` - A list glob patterns for files to exclude from the validation.
+`exclude_patterns` - An array of glob patterns for files to exclude from the validation.
+
+`llm_responses` - An array of all LLM responses that were received during validation.
+Includes extra data such as file paths and the prompt supplied to the LLM as well as the raw response from the LLM.
+
+`warn_for_validation_errors` - Whether a warning message should be posted if any of the validations failed. Defaults to true.
 
 
 
@@ -53,7 +58,8 @@ This can help the model understand the context of the changes better.
 `configure_api` - Configure the OpenAI library to connect to the desired API endpoints etc.
 See https://github.com/alexrudall/ruby-openai for more details on what parameters can be configured.
 
-`check` - Run the validation
+`check` - Run the validation. Loops over all hunks in the git diff, and prompts the LLM to validate it.
+Creates warnings for all comments received from the LLM.
 
 
 ## Installation

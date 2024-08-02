@@ -24,12 +24,7 @@ module Danger
           temperature: temperature
         }
       )
-      response_message_content = response.dig("choices", 0, "message", "content")
-      begin
-        LlmResponse.from_json(response_message_content)
-      rescue StandardError
-        puts "Failed to parse LLM response '#{response_message_content}'"
-      end
+      response.dig("choices", 0, "message", "content")
     end
   end
 end
