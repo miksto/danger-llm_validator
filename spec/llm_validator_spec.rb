@@ -41,10 +41,10 @@ module Danger
       it "It submits chunks" do
         git = Git.open("/Users/miksto/project/danger-openai-plugin")
         allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(git.diff)
-
+        checks = ["Comments in the code do not state obviously incorrect things"]
         @my_plugin.checks = [
           "Comments in the code do not state obviously incorrect things",
-          "Variable names are not obviously misleading and incorrect"
+          "Variable names are not clearly misleading and incorrect"
         ]
 
         @my_plugin.check

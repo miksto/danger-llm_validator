@@ -15,17 +15,21 @@ module Danger
     def build_file_contents
       diff_files_to_process = git.diff.select { |file| file_filter.allowed?(file.path) && file.type != "deleted" && !file.binary? }
       diff_files_to_process.map do |diff_file|
-        # Prepare a list of all file lines prefixed with its line number
-        prefixed_file_content = prefix_file_lines_with_line_number(file_path: diff_file.path)
+        # Get file path after potential rename
+        rename_to = diff_file.patch.match(/^rename to (.+)$/)
+        file_path = rename_to ? rename_to[1] : diff_file.path
 
         # Get a list of all diff headers
         diff_headers = diff_file.patch.lines.select { |line| DiffHeader.valid_header?(line) }
+
+        # Prepare a list of all file lines prefixed with its line number
+        prefixed_file_content = prefix_file_lines_with_line_number(file_path: file_path)
 
         # Extract hunks from prefixed_file_content based on the diff_headers
         hunks_for_review = diff_headers.map do |diff_header|
           extract_file_lines_for_diff_header(file_lines: prefixed_file_content, diff_header_line: diff_header).join
         end
-        FileContent.new(file_path: diff_file.path, hunks: hunks_for_review)
+        FileContent.new(file_path: file_path, hunks: hunks_for_review)
       end
     end
 

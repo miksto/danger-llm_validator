@@ -7,38 +7,35 @@ module Danger
   # Write rules in natural language, and let an LLM ensure they are followed.
   # You can either run the LLM locally, such as with Ollama, or use one of the OpenAI models.
   #
-  # @example Configure to use OpenAI
+  # @example Basic setup using gpt-4o-mini from OpenAI as the LLM
   #          llm_validator.configure_api do |config|
   #            config.access_token = ENV.fetch("OPENAI_ACCESS_TOKEN")
   #          end
   #          llm_validator.llm_model = "gpt-4o-mini"
-  #          llm_validator.checks = [
-  #            "Comments match what the code actually does",
-  #            "Variable names match the content they are assigned"
-  #          ]
+  #          llm_validator.checks = ["Comments in the code do not state obviously incorrect things"]
   #          llm_validator.check
   #
-  # @example Configure to use a locally running Ollama server
+  # @example Basic setup using a locally running LLM served by Ollama
   #          llm_validator.configure_api do |config|
   #             config.uri_base = "http://127.0.0.1:11434"
   #          end
+  #          llm_validator.checks = ["Comments in the code do not state obviously incorrect things"]
   #          llm_validator.llm_model = "llama3"
   #          llm_validator.check
   #
-  # @example Other configuration options
+  # @example To filter what files are included or excluded from validation
   #          llm_validator.include_patterns = ["*.kt"]
   #          llm_validator.exclude_patterns = ["src/**/*.rb"]
-  #          llm_validator.diff_context_extra_lines = 10
   #
   # @see miksto/danger-llm_validator
   # @tags validation, chatgpt, llm, openai
   class DangerLlmValidator < Plugin
-    # A list of checks to be performed by the validator
+    # List of checks for the LLM to validate the code changes against.
     #
     # @return [Array<String>]
     attr_accessor :checks
 
-    # The identifier of the language model used for validation.
+    # The identifier of the language model to use for validation.
     #
     # @return [String]
     attr_accessor :llm_model
@@ -55,27 +52,15 @@ module Danger
     # @return [Integer]
     attr_accessor :diff_context_extra_lines
 
-    # A list of file patterns to include when running the checks.
+    # A list glob patterns for files to include in the validation
     #
     # @return [Array<String>]
     attr_accessor :include_patterns
 
-    # A list of file patterns to exclude from validation.
+    # A list glob patterns for files to exclude from the validation.
     #
     # @return [Array<String>]
     attr_accessor :exclude_patterns
-
-    # A FileFilter used to check if a file should be processed or not
-    #
-    # @return [FileFilter]
-    attr_reader :file_filter
-
-    # A wrapper around the OpenAI class exposing a minimal set of functions.
-    # Handles prompting the LLM and parsing the response message.
-    #
-    # @return [LlmPrompter]
-    attr_reader :llm_prompter
-    private :file_filter, :llm_prompter
 
     def initialize(dangerfile)
       super(dangerfile)
