@@ -7,8 +7,8 @@ You can either run the LLM locally, such as with Ollama, or use one of the OpenA
   <pre>llm_validator.configure_api do |config|
   config.access_token = ENV.fetch("OPENAI_ACCESS_TOKEN")
 end
-llm_validator.llm_model = "gpt-4o-mini"
 llm_validator.checks = ["Comments in the code do not state obviously incorrect things"]
+llm_validator.llm_model = "gpt-4o-mini"
 llm_validator.check</pre>
 </blockquote>
 
@@ -54,6 +54,12 @@ Includes extra data such as file paths and the prompt supplied to the LLM as wel
 
 `warn_for_llm_comments` - Whether a warning should be posted for comments received from the LLM. Defaults to true.
 
+`system_prompt_template` - Allows you to customize the system prompt for the LLM. Typically used to set overall behavior, tone, and rules for how the AI model.
+Supported place holders are `{{CHECKS}}`, `{{JSON_FORMAT}}`, `{{FILE_PATH}}` and `{{CONTENT}}`.
+
+`user_prompt_template` - Allows you to customize the user prompt for the LLM. Typically used to provide a specific input or question to the AI.
+Supported place holders are `{{CHECKS}}`, `{{JSON_FORMAT}}`, `{{FILE_PATH}}` and `{{CONTENT}}`.
+
 
 
 
@@ -73,6 +79,28 @@ Add the following your gemfile
     gem "danger-llm_validator", git: 'https://github.com/miksto/danger-llm_validator.git'
 
 Methods and attributes from this plugin are available in your `Dangerfile` under the `llm_validator` namespace.
+
+### Custom Prompt Templates
+
+You can customize the behavior and responses of the LLM by providing your own `system_prompt_template` and `user_prompt_template` attributes to tailor it to your needs.
+
+The default values for the prompts are as follows:
+
+#### Default System Prompt Template    
+
+    "You are an expert coder who performs code reviews of a pull request in GitHub.\n" \
+      "Your ONLY task is to ensure that the following statements are adhered to:\n" \
+      "{{CHECKS}}\n\n" \
+      "If no violations are found, respond with an empty comments array.\n" \
+      "Each line between CONTENT_BEGIN and CONTENT_END is prefixed with the line number.\n" \
+      "You must respond with this JSON format:\n" \
+      "{{JSON_FORMAT}}\n"
+
+#### Default User Prompt Template
+    DEFAULT_USER_PROMPT_TEMPLATE = "METADATA_BEGIN\nfile_path: {{FILE_PATH}}\nMETADATA_END\nCONTENT_BEGIN\n{{CONTENT}}CONTENT_END\n"
+
+By setting any of `system_prompt_template` and `user_prompt_template` to `nil` you can exclude that message from the prompt.
+
 
 ## Development
 

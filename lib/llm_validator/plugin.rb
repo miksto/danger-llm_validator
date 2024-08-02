@@ -11,8 +11,8 @@ module Danger
   #          llm_validator.configure_api do |config|
   #            config.access_token = ENV.fetch("OPENAI_ACCESS_TOKEN")
   #          end
-  #          llm_validator.llm_model = "gpt-4o-mini"
   #          llm_validator.checks = ["Comments in the code do not state obviously incorrect things"]
+  #          llm_validator.llm_model = "gpt-4o-mini"
   #          llm_validator.check
   #
   # @example Basic setup using a locally running LLM served by Ollama
@@ -84,6 +84,28 @@ module Danger
     # @return [Boolean]
     attr_accessor :warn_for_llm_comments
 
+    # Allows you to customize the system prompt for the LLM. Typically used to set overall behavior, tone, and rules for how the AI model.
+    # Supported place holders are `{{CHECKS}}`, `{{JSON_FORMAT}}`, `{{FILE_PATH}}` and `{{CONTENT}}`.
+    #
+    # @return [String]
+    attr_accessor :system_prompt_template
+
+    # Allows you to customize the user prompt for the LLM. Typically used to provide a specific input or question to the AI.
+    # Supported place holders are `{{CHECKS}}`, `{{JSON_FORMAT}}`, `{{FILE_PATH}}` and `{{CONTENT}}`.
+    #
+    # @return [String]
+    attr_accessor :user_prompt_template
+
+    DEFAULT_SYSTEM_PROMPT_TEMPLATE = "You are an expert coder who performs code reviews of a pull request in GitHub.\n" \
+      "Your ONLY task is to ensure that the following statements are adhered to:\n" \
+      "{{CHECKS}}\n\n" \
+      "If no violations are found, respond with an empty comments array.\n" \
+      "Each line between CONTENT_BEGIN and CONTENT_END is prefixed with the line number.\n" \
+      "You must respond with this JSON format:\n" \
+      "{{JSON_FORMAT}}\n"
+
+    DEFAULT_USER_PROMPT_TEMPLATE = "METADATA_BEGIN\nfile_path: {{FILE_PATH}}\nMETADATA_END\nCONTENT_BEGIN\n{{CONTENT}}CONTENT_END\n"
+
     def initialize(dangerfile)
       super(dangerfile)
       @diff_context_extra_lines = 5
@@ -92,6 +114,8 @@ module Danger
       @exclude_patterns = []
       @warn_for_validation_errors = true
       @warn_for_llm_comments = true
+      @system_prompt_template = DEFAULT_SYSTEM_PROMPT_TEMPLATE
+      @user_prompt_template = DEFAULT_USER_PROMPT_TEMPLATE
     end
 
     # Configure the OpenAI library to connect to the desired API endpoints etc.
@@ -114,12 +138,16 @@ module Danger
         file_filter: file_filter,
         diff_context_extra_lines: diff_context_extra_lines
       ).build_file_contents
-      prompt_builder = PromptBuilder.new(checks)
+      prompt_builder = PromptBuilder.new(
+        checks: checks,
+        system_prompt_template: system_prompt_template,
+        user_prompt_template: user_prompt_template
+      )
       llm_prompter = LlmPrompter.new(llm_model: llm_model, temperature: temperature)
 
       hunk_content_list.each do |file_content|
         file_content.hunks.each do |hunk|
-          prompt_messages = prompt_builder.build_prompt_messages(file_path: file_content.file_path, hunk: hunk)
+          prompt_messages = prompt_builder.build_prompt_messages(file_path: file_content.file_path, content: hunk)
           begin
             llm_response_text = llm_prompter.chat(prompt_messages)
             llm_response = LlmResponse.from_llm_response(

@@ -2,49 +2,60 @@
 
 module Danger
   class PromptBuilder
-    attr_reader :checks, :pre_checks_content, :post_checks_content
+    attr_reader :checks, :system_prompt_template, :user_prompt_template
 
-    def initialize(checks)
+    def initialize(checks:, system_prompt_template:, user_prompt_template:)
       @checks = checks
-      @pre_checks_content = "You are an expert coder who performs code reviews of a pull request in GitHub.\n" \
-        "Your task is to ensure that the following statements are adhered to:"
-      @post_checks_content = "However, if no issues are found, respond with an empty array.\n" \
-        "Each line between CONTENT_BEGIN and CONTENT_END is prefixed with the line number."
+      @system_prompt_template = system_prompt_template
+      @user_prompt_template = user_prompt_template
     end
 
-    def build_prompt_messages(file_path:, hunk:)
-      [
-        {
-          role: "system",
-          content: build_system_content
-        },
-        {
+    def build_prompt_messages(file_path:, content:)
+      messages = []
+      unless system_prompt_template.nil?
+        messages <<
+          {
+            role: "system",
+            content: build_system_content(file_path: file_path, content: content)
+          }
+      end
+
+      unless user_prompt_template.nil?
+        messages << {
           role: "user",
-          content: build_user_content(file_path: file_path, hunk: hunk)
+          content: build_user_content(file_path: file_path, content: content)
         }
-      ]
+      end
+
+      messages
     end
 
     private
 
-    def build_system_content
-      "#{pre_checks_content}\n" \
-        "#{checks.map.with_index(1) { |check, index| "  #{index}. #{check}" }.join("\n")}\n\n" \
-        "#{post_checks_content}\n" \
-        "You must respond according to this JSON format:\n" \
-        "{\n" \
-        "  \"comments\": [\n" \
-        "    {\n" \
-        "      \"line_number\": 1,\n" \
-        "      \"line_content\": \"line content\",\n" \
-        "      \"comment\": \"description of issue and suggested fix\"\n" \
-        "    }\n" \
-        "  ]\n" \
-        "}"
+    JSON_FORMAT = "{\n" \
+      "  \"comments\": [\n" \
+      "    {\n" \
+      "      \"line_number\": 1,\n" \
+      "      \"line_content\": \"line content\",\n" \
+      "      \"comment\": \"description of issue and suggested fix\"\n" \
+      "    }\n" \
+      "  ]\n" \
+      "}"
+
+    def replace_placeholders(template:, file_path:, content:)
+      checks_string = checks.map.with_index(1) { |check, index| "  #{index}. #{check}" }.join("\n")
+      template.gsub("{{CHECKS}}", checks_string)
+        .gsub("{{JSON_FORMAT}}", JSON_FORMAT)
+        .gsub("{{FILE_PATH}}", file_path)
+        .gsub("{{CONTENT}}", content)
     end
 
-    def build_user_content(file_path:, hunk:)
-      "METADATA_BEGIN\nfile_path : #{file_path}\nMETADATA_END\nCONTENT_BEGIN\n#{hunk}\nCONTENT_END\n"
+    def build_system_content(file_path:, content:)
+      replace_placeholders(template: system_prompt_template, file_path: file_path, content: content)
+    end
+
+    def build_user_content(file_path:, content:)
+      replace_placeholders(template: user_prompt_template, file_path: file_path, content: content)
     end
   end
 end
