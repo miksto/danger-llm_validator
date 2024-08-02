@@ -20,9 +20,6 @@ module Danger
           @my_plugin.llm_model = "llama3"
         end
 
-        @my_plugin.temperature = 0.0
-        @my_plugin.diff_context_extra_lines = 10
-
         @my_plugin.configure_api do |config|
           if use_open_ai
             config.access_token = ENV.fetch("OPENAI_ACCESS_TOKEN")
@@ -41,7 +38,6 @@ module Danger
       it "It submits chunks" do
         git = Git.open("/Users/miksto/project/danger-openai-plugin")
         allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(git.diff)
-        checks = ["Comments in the code do not state obviously incorrect things"]
         @my_plugin.checks = [
           "Comments in the code do not state obviously incorrect things",
           "Variable names are not clearly misleading and incorrect"
