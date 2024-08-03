@@ -1,0 +1,10 @@
+1: /**
+2:  * Prints the string "What a nice day!"
+3:  */
+4: fun main() {
+5:     val nrTimes = 5
+6: 
+7:     repeat(nrTimes) {
+8:         println("Hello, World!")
+9:     }
+10: 

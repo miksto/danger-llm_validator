@@ -3,6 +3,66 @@
 require File.expand_path("spec_helper", __dir__)
 
 module Danger
+
+  describe Danger::FileFilter do
+    let(:mock_test_file_path) { "spec/fixtures/TestFileWithIssues.kt" }
+
+    it "Allows the test file if all filters are empty" do
+      file_filter = FileFilter.new(
+        include_patterns: [],
+        exclude_patterns: [],
+      )
+
+      result = file_filter.allowed?(mock_test_file_path)
+
+      expect(result).to eq(true)
+    end
+
+    it "Allows the test file if the inclusion filter matches it" do
+      file_filter = FileFilter.new(
+        include_patterns: ["**/*.kt"],
+        exclude_patterns: [],
+      )
+
+      result = file_filter.allowed?(mock_test_file_path)
+
+      expect(result).to eq(true)
+    end
+
+    it "Does not allow the test file if the inclusion filter does not match it" do
+      file_filter = FileFilter.new(
+        include_patterns: ["**/*.rb"],
+        exclude_patterns: [],
+      )
+
+      result = file_filter.allowed?(mock_test_file_path)
+
+      expect(result).to eq(false)
+    end
+
+    it "Does not allow the test file if both the inclusion and exclusion filter matches it" do
+      file_filter = FileFilter.new(
+        include_patterns: ["**/*.kt"],
+        exclude_patterns: [mock_test_file_path],
+      )
+
+      result = file_filter.allowed?(mock_test_file_path)
+
+      expect(result).to eq(false)
+    end
+
+    it "Does not allow the test file if only exclusion filter matches it" do
+      file_filter = FileFilter.new(
+        include_patterns: [],
+        exclude_patterns: [mock_test_file_path],
+      )
+
+      result = file_filter.allowed?(mock_test_file_path)
+
+      expect(result).to eq(false)
+    end
+  end
+
   describe Danger::DangerLlmValidator do
     it "should be a plugin" do
       expect(Danger::DangerLlmValidator.new(nil)).to be_a Danger::Plugin
@@ -11,50 +71,203 @@ module Danger
     describe "with Dangerfile" do
       before do
         @dangerfile = testing_dangerfile
-        @my_plugin = @dangerfile.llm_validator
-
-        use_open_ai = false
-        if use_open_ai
-          @my_plugin.llm_model = "gpt-4o-mini"
-        else
-          @my_plugin.llm_model = "llama3"
-        end
-
-        @my_plugin.configure_api do |config|
-          if use_open_ai
-            config.access_token = ENV.fetch("OPENAI_ACCESS_TOKEN")
-          else
-            config.uri_base = "http://127.0.0.1:11434"
-          end
-          config.log_errors = true # Highly recommended in development, so you can see what errors OpenAI is returning. Not recommended in production because it could leak private data to your logs.
-        end
-
-        # mock the PR data
-        # you can then use this, eg. github.pr_author, later in the spec
-        # json = File.read("#{File.dirname(__FILE__)}/support/fixtures/github_pr.json") # example json: `curl https://api.github.com/repos/danger/danger-plugin-template/pulls/18 > github_pr.json`
-        # allow(@my_plugin.github).to receive(:pr_json).and_return(json)
+        @llm_validator = @dangerfile.llm_validator
       end
 
-      # it "It submits chunks" do
-      #   git = Git.open("/Users/miksto/project/danger-openai-plugin")
-      #   allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(git.diff)
-      #   @my_plugin.checks = [
-      #     "Comments in the code do not state obviously incorrect things",
-      #     "Variable names are not clearly misleading and incorrect"
-      #   ]
-      #
-      #   @my_plugin.check
-      #
-      #   @my_plugin.validation_errors.each do |message|
-      #     puts message
-      #   end
-      #
-      #   @my_plugin.llm_responses.each do |response|
-      #     puts response.prompt_messages
-      #     puts response.raw_response
-      #     puts "---"
-      #   end
-      # end
+      describe "with simple git diff" do
+        let(:mock_test_file_path) { "spec/fixtures/TestFileWithIssues.kt" }
+        let(:mock_diff) { instance_double(Git::Diff) }
+        let(:mock_diff_file) { instance_double(Git::Diff::DiffFile, path: mock_test_file_path, type: "modified", binary?: false) }
+        let(:mock_llm_prompter) { instance_double(LlmPrompter) }
+        let(:mock_diff_file_patch) { File.read("spec/fixtures/diff_file_simple_patch.txt") }
+        let(:mock_llm_response_with_comments) { File.read("spec/fixtures/llm_response_with_comments.json") }
+        let(:mock_llm_response_without_comments) { File.read("spec/fixtures/llm_response_without_comments.json") }
+
+        before do
+          allow(@llm_validator.git).to receive(:diff).and_return(mock_diff)
+          allow(@llm_validator).to receive(:warn)
+          allow(mock_diff).to receive(:select).and_return([mock_diff_file])
+          allow(mock_diff_file).to receive(:patch).and_return(mock_diff_file_patch)
+
+          allow(LlmPrompter).to receive(:new).and_return(mock_llm_prompter)
+          allow(mock_llm_prompter).to receive(:chat).and_return(mock_llm_response_with_comments)
+
+          @llm_validator.checks = ["Ensure proper code comments"]
+          @llm_validator.llm_model = "gpt-4o-mini"
+        end
+
+        it "Submits simple patch for review" do
+          @llm_validator.system_prompt_template = "mock system template"
+          @llm_validator.user_prompt_template = "mock user template\n{{CONTENT}}"
+          allow(mock_llm_prompter).to receive(:chat).and_return(mock_llm_response_without_comments)
+
+          @llm_validator.check
+
+          # Then
+          file_read = File.read('spec/fixtures/patch_for_review.txt')
+          expected_messages = [
+            {
+              role: "system",
+              content: "mock system template"
+            },
+            {
+              role: "user",
+              content: "mock user template\n#{file_read}"
+            }
+          ]
+          expect(mock_llm_prompter).to have_received(:chat).with(expected_messages)
+          expect(@llm_validator.validation_errors.count).to eq(0)
+          expect(@llm_validator).not_to have_received(:warn)
+        end
+
+        it "Parses LLM responses and sets the llm_responses attribute" do
+          @llm_validator.system_prompt_template = nil
+          @llm_validator.user_prompt_template = "mock user template"
+
+          @llm_validator.check
+
+          expect(@llm_validator.llm_responses.count).to eq(1)
+          expect(@llm_validator.llm_responses.first.comments.count).to eq(1)
+          comment = @llm_validator.llm_responses.first.comments.first
+          expect(comment.line_number).to eq(1337)
+          expect(comment.line_content).to eq("The line content")
+          expect(comment.comment).to eq("The comment")
+        end
+
+        it "Parses LLM responses and posts warnings for all comments" do
+
+          @llm_validator.check
+
+          expect(@llm_validator).to have_received(:warn).with("The comment", file: mock_test_file_path, line: 1337)
+        end
+
+        it "Does not post warning for comments if :warn_for_llm_comments is false" do
+          @llm_validator.warn_for_llm_comments = false
+
+          @llm_validator.system_prompt_template = nil
+          @llm_validator.user_prompt_template = "mock user template\n{{CONTENT}}"
+
+          @llm_validator.check
+
+          expect(@llm_validator).not_to have_received(:warn)
+        end
+
+        it "Posts a global warning if the llm_prompter fails" do
+          allow(mock_llm_prompter).to receive(:chat).and_raise(StandardError, "Something went wrong")
+
+          @llm_validator.check
+
+          expect(@llm_validator).to have_received(:warn)
+          expect(@llm_validator.validation_errors.count).to eq(1)
+        end
+
+        it "Posts a global warning if the llm_response was not valid JSON" do
+          allow(mock_llm_prompter).to receive(:chat).and_return("{}\n")
+
+          @llm_validator.check
+
+          expect(@llm_validator).to have_received(:warn)
+          expect(@llm_validator.validation_errors.count).to eq(1)
+        end
+
+        it "Does not post a global warning if the validation fails and :warn_for_validation_errors is false" do
+          allow(mock_llm_prompter).to receive(:chat).and_raise(StandardError, "Something went wrong")
+          @llm_validator.warn_for_validation_errors = false
+
+          @llm_validator.check
+
+          expected_error_message = "Failed to validate file: #{mock_test_file_path} with error: Something went wrong. LLM response: ''"
+          expect(@llm_validator).not_to have_received(:warn)
+          expect(@llm_validator.validation_errors).to eq([expected_error_message])
+        end
+      end
+
+      describe "with renamed file git diff" do
+        let(:mock_diff) { instance_double(Git::Diff) }
+        let(:mock_diff_file) { instance_double(Git::Diff::DiffFile, path: "spec/support/fixtures/OldFileName.kt", type: "modified", binary?: false) }
+        let(:mock_llm_prompter) { instance_double(LlmPrompter) }
+        let(:mock_diff_file_patch) { File.read("spec/fixtures/diff_file_renamed_file_patch.txt") }
+        let(:mock_llm_response_without_comments) { File.read("spec/fixtures/llm_response_without_comments.json") }
+
+        before do
+          allow(@llm_validator.git).to receive(:diff).and_return(mock_diff)
+          allow(@llm_validator).to receive(:warn)
+          allow(mock_diff).to receive(:select).and_return([mock_diff_file])
+          allow(mock_diff_file).to receive(:patch).and_return(mock_diff_file_patch)
+
+          allow(LlmPrompter).to receive(:new).and_return(mock_llm_prompter)
+          allow(mock_llm_prompter).to receive(:chat).and_return(mock_llm_response_without_comments)
+
+          @llm_validator.checks = ["Ensure proper code comments"]
+          @llm_validator.llm_model = "gpt-4o-mini"
+        end
+
+        it "Submits renamed patch for review" do
+          @llm_validator.system_prompt_template = "mock system template"
+          @llm_validator.user_prompt_template = "mock user template\n{{CONTENT}}"
+          allow(mock_llm_prompter).to receive(:chat).and_return(mock_llm_response_without_comments)
+
+          @llm_validator.check
+
+          # Then
+          expected_messages = [
+            {
+              role: "system",
+              content: "mock system template"
+            },
+            {
+              role: "user",
+              content: "mock user template\n#{File.read('spec/fixtures/patch_for_review.txt')}"
+            }
+          ]
+          expect(mock_llm_prompter).to have_received(:chat).with(expected_messages)
+          expect(@llm_validator.validation_errors.count).to eq(0)
+          expect(@llm_validator).not_to have_received(:warn)
+        end
+      end
+
+      describe "with real llm_prompter implementation and local git diff" do
+        before do
+          git = Git.open(Dir.pwd)
+          allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(git.diff)
+
+          use_open_ai = false
+          if use_open_ai
+            @llm_validator.llm_model = "gpt-4o-mini"
+          else
+            @llm_validator.llm_model = "llama3"
+          end
+
+          @llm_validator.configure_api do |config|
+            if use_open_ai
+              config.access_token = ENV.fetch("OPENAI_ACCESS_TOKEN")
+            else
+              config.uri_base = "http://127.0.0.1:11434"
+            end
+            config.log_errors = true
+          end
+        end
+
+        it "It submits chunks" do
+
+          @llm_validator.checks = [
+            "Comments in the code do not state obviously incorrect things",
+            "Variable names are not clearly misleading and incorrect"
+          ]
+
+          @llm_validator.check
+
+          @llm_validator.validation_errors.each do |message|
+            puts message
+          end
+
+          @llm_validator.llm_responses.each do |response|
+            puts response.prompt_messages
+            puts response.raw_response
+            puts "---"
+          end
+        end
+      end
     end
   end
 end

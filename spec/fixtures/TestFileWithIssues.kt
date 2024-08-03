@@ -1,5 +1,5 @@
 /**
- * Prints the string "What a nice day"
+ * Prints the string "What a nice day!"
  */
 fun main() {
     val nrTimes = 5
