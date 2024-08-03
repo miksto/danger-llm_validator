@@ -49,7 +49,7 @@ module Danger
 
     def self.from_llm_response(comment:)
       LlmResponseComment.new(
-        line_number: comment["line_number"],
+        line_number: comment["line_number"].to_i,
         line_content: comment["line_content"],
         comment: comment["comment"]
       )
