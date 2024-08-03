@@ -1,0 +1,14 @@
+diff --git a/spec/fixtures/OldFileName.kt b/spec/fixtures/TestFileWithIssues.kt
+similarity index 97%
+rename from spec/fixtures/OldFileName.kt
+rename to spec/fixtures/TestFileWithIssues.kt
+index 53d461b..3c38d1d 100644
+--- a/spec/fixtures/OldFileName.kt
++++ b/spec/fixtures/TestFileWithIssues.kt
+@@ -1,5 +1,5 @@
+ /**
+- * Prints the string "What a nice day"
++ * Prints the string "What a nice day!"
+  */
+ fun main() {
+     val nrTimes = 5

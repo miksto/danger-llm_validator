@@ -1,0 +1,11 @@
+diff --git a/spec/support/fixtures/HelloWorldWithErrors.kt b/spec/support/fixtures/HelloWorldWithErrors.kt
+index 2dc3ca9..f251894 100644
+--- a/spec/support/fixtures/HelloWorldWithErrors.kt
++++ b/spec/support/fixtures/HelloWorldWithErrors.kt
+@@ -1,5 +1,5 @@
+ /**
+- * Prints the string "What a nice day"
++ * Prints the string "What a nice day!"
+  */
+ fun main() {
+     val nrTimes = 5
