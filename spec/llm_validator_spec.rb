@@ -43,7 +43,6 @@ module Danger
 
           @llm_validator.check
 
-          # Then
           file_read = File.read("spec/fixtures/patch_for_review.txt")
           expected_messages = [
             {
@@ -72,7 +71,6 @@ module Danger
 
           @llm_validator.check
 
-          # Then
           file_read = File.read("spec/fixtures/patch_for_review.txt")
 
           expected_prompt = "  1. Ensure proper code comments\n" \
@@ -181,7 +179,6 @@ module Danger
 
           @llm_validator.check
 
-          # Then
           expected_messages = [
             {
               role: "system",
