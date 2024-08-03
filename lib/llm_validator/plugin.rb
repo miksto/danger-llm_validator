@@ -47,8 +47,10 @@ module Danger
     # @return [Float]
     attr_accessor :temperature
 
-    # The number of additional context lines to include around each change in a diff.
+    # The number of additional context lines to include around each change in a diff. This is in addition
+    # to the context lines included by the default git dif.
     # This can help the model understand the context of the changes better.
+    # The default value is 5.
     #
     # @return [Integer]
     attr_accessor :diff_context_extra_lines
