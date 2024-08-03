@@ -38,8 +38,10 @@ llm_validator.exclude_patterns = ["src/**/*.rb"]</pre>
 A lower value results in more deterministic output, while a higher value allows for more creativity.
 Defaults to 0.0 for a deterministic output.
 
-`diff_context_extra_lines` - The number of additional context lines to include around each change in a diff.
+`diff_context_extra_lines` - The number of additional context lines to include around each change in a diff. This is in addition
+to the context lines included by the default git dif.
 This can help the model understand the context of the changes better.
+The default value is 5.
 
 `include_patterns` - An array of glob patterns for files to include in the validation.
 
