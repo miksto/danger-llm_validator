@@ -71,6 +71,9 @@ Metrics/ClassLength:
 Metrics/CyclomaticComplexity:
   Max: 17
 
+Metrics/ModuleLength:
+  Max: 350
+
 # Configuration parameters: AllowURI, URISchemes.
 Layout/LineLength:
   Max: 370

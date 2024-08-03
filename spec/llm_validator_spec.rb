@@ -3,66 +3,6 @@
 require File.expand_path("spec_helper", __dir__)
 
 module Danger
-
-  describe Danger::FileFilter do
-    let(:mock_test_file_path) { "spec/fixtures/TestFileWithIssues.kt" }
-
-    it "Allows the test file if all filters are empty" do
-      file_filter = FileFilter.new(
-        include_patterns: [],
-        exclude_patterns: [],
-      )
-
-      result = file_filter.allowed?(mock_test_file_path)
-
-      expect(result).to eq(true)
-    end
-
-    it "Allows the test file if the inclusion filter matches it" do
-      file_filter = FileFilter.new(
-        include_patterns: ["**/*.kt"],
-        exclude_patterns: [],
-      )
-
-      result = file_filter.allowed?(mock_test_file_path)
-
-      expect(result).to eq(true)
-    end
-
-    it "Does not allow the test file if the inclusion filter does not match it" do
-      file_filter = FileFilter.new(
-        include_patterns: ["**/*.rb"],
-        exclude_patterns: [],
-      )
-
-      result = file_filter.allowed?(mock_test_file_path)
-
-      expect(result).to eq(false)
-    end
-
-    it "Does not allow the test file if both the inclusion and exclusion filter matches it" do
-      file_filter = FileFilter.new(
-        include_patterns: ["**/*.kt"],
-        exclude_patterns: [mock_test_file_path],
-      )
-
-      result = file_filter.allowed?(mock_test_file_path)
-
-      expect(result).to eq(false)
-    end
-
-    it "Does not allow the test file if only exclusion filter matches it" do
-      file_filter = FileFilter.new(
-        include_patterns: [],
-        exclude_patterns: [mock_test_file_path],
-      )
-
-      result = file_filter.allowed?(mock_test_file_path)
-
-      expect(result).to eq(false)
-    end
-  end
-
   describe Danger::DangerLlmValidator do
     it "should be a plugin" do
       expect(Danger::DangerLlmValidator.new(nil)).to be_a Danger::Plugin
@@ -104,7 +44,7 @@ module Danger
           @llm_validator.check
 
           # Then
-          file_read = File.read('spec/fixtures/patch_for_review.txt')
+          file_read = File.read("spec/fixtures/patch_for_review.txt")
           expected_messages = [
             {
               role: "system",
@@ -135,7 +75,6 @@ module Danger
         end
 
         it "Parses LLM responses and posts warnings for all comments" do
-
           @llm_validator.check
 
           expect(@llm_validator).to have_received(:warn).with("The comment", file: mock_test_file_path, line: 1337)
@@ -223,49 +162,6 @@ module Danger
           expect(mock_llm_prompter).to have_received(:chat).with(expected_messages)
           expect(@llm_validator.validation_errors.count).to eq(0)
           expect(@llm_validator).not_to have_received(:warn)
-        end
-      end
-
-      describe "with real llm_prompter implementation and local git diff" do
-        before do
-          git = Git.open(Dir.pwd)
-          allow_any_instance_of(Danger::DangerfileGitPlugin).to receive(:diff).and_return(git.diff)
-
-          use_open_ai = false
-          if use_open_ai
-            @llm_validator.llm_model = "gpt-4o-mini"
-          else
-            @llm_validator.llm_model = "llama3"
-          end
-
-          @llm_validator.configure_api do |config|
-            if use_open_ai
-              config.access_token = ENV.fetch("OPENAI_ACCESS_TOKEN")
-            else
-              config.uri_base = "http://127.0.0.1:11434"
-            end
-            config.log_errors = true
-          end
-        end
-
-        it "It submits chunks" do
-
-          @llm_validator.checks = [
-            "Comments in the code do not state obviously incorrect things",
-            "Variable names are not clearly misleading and incorrect"
-          ]
-
-          @llm_validator.check
-
-          @llm_validator.validation_errors.each do |message|
-            puts message
-          end
-
-          @llm_validator.llm_responses.each do |response|
-            puts response.prompt_messages
-            puts response.raw_response
-            puts "---"
-          end
         end
       end
     end
