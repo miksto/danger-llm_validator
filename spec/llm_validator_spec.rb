@@ -60,6 +60,39 @@ module Danger
           expect(@llm_validator).not_to have_received(:warn)
         end
 
+        it "Replace all placeholders in the prompt templates" do
+          all_placeholders = "{{CHECKS}}\n" \
+            "{{JSON_FORMAT}}\n" \
+            "{{FILE_PATH}}\n" \
+            "{{CONTENT}}"
+          @llm_validator.system_prompt_template = all_placeholders
+          @llm_validator.user_prompt_template = all_placeholders
+
+          allow(mock_llm_prompter).to receive(:chat).and_return(mock_llm_response_without_comments)
+
+          @llm_validator.check
+
+          # Then
+          file_read = File.read("spec/fixtures/patch_for_review.txt")
+
+          expected_prompt = "  1. Ensure proper code comments\n" \
+            "#{PromptBuilder::JSON_FORMAT}\n" \
+            "#{mock_test_file_path}\n" \
+            "#{file_read}"
+
+          expected_messages = [
+            {
+              role: "system",
+              content: expected_prompt
+            },
+            {
+              role: "user",
+              content: expected_prompt
+            }
+          ]
+          expect(mock_llm_prompter).to have_received(:chat).with(expected_messages)
+        end
+
         it "Parses LLM responses and sets the llm_responses attribute" do
           @llm_validator.system_prompt_template = nil
           @llm_validator.user_prompt_template = "mock user template"
