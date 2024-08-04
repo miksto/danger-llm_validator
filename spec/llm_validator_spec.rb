@@ -22,6 +22,7 @@ module Danger
         let(:mock_diff_file_patch) { File.read("spec/fixtures/diff_file_simple_patch.txt") }
         let(:mock_llm_response_with_comments) { File.read("spec/fixtures/llm_response_with_comments.json") }
         let(:mock_llm_response_without_comments) { File.read("spec/fixtures/llm_response_without_comments.json") }
+        let(:mock_patch_content_for_review) { File.read("spec/fixtures/patch_for_review.txt") }
 
         before do
           allow(@llm_validator.git).to receive(:diff).and_return(mock_diff)
@@ -43,7 +44,6 @@ module Danger
 
           @llm_validator.check
 
-          file_read = File.read("spec/fixtures/patch_for_review.txt")
           expected_messages = [
             {
               role: "system",
@@ -51,7 +51,7 @@ module Danger
             },
             {
               role: "user",
-              content: "mock user template\n#{file_read}"
+              content: "mock user template\n#{mock_patch_content_for_review}"
             }
           ]
           expect(mock_llm_prompter).to have_received(:chat).with(expected_messages)
@@ -71,12 +71,10 @@ module Danger
 
           @llm_validator.check
 
-          file_read = File.read("spec/fixtures/patch_for_review.txt")
-
           expected_prompt = "  1. Ensure proper code comments\n" \
             "#{PromptBuilder::JSON_FORMAT}\n" \
             "#{mock_test_file_path}\n" \
-            "#{file_read}"
+            "#{mock_patch_content_for_review}"
 
           expected_messages = [
             {
@@ -154,10 +152,14 @@ module Danger
 
       describe "with renamed file git diff" do
         let(:mock_diff) { instance_double(Git::Diff) }
-        let(:mock_diff_file) { instance_double(Git::Diff::DiffFile, path: "spec/support/fixtures/OldFileName.kt", type: "modified", binary?: false) }
+        let(:mock_test_file_old_path) { "spec/fixtures/OldFileName.kt" }
+        let(:mock_test_file_new_path) { "spec/fixtures/TestFileWithIssues.kt" }
+
+        let(:mock_diff_file) { instance_double(Git::Diff::DiffFile, path: mock_test_file_old_path, type: "modified", binary?: false) }
         let(:mock_llm_prompter) { instance_double(LlmPrompter) }
         let(:mock_diff_file_patch) { File.read("spec/fixtures/diff_file_renamed_file_patch.txt") }
         let(:mock_llm_response_without_comments) { File.read("spec/fixtures/llm_response_without_comments.json") }
+        let(:mock_patch_content_for_review) { File.read("spec/fixtures/patch_for_review.txt") }
 
         before do
           allow(@llm_validator.git).to receive(:diff).and_return(mock_diff)
@@ -186,12 +188,42 @@ module Danger
             },
             {
               role: "user",
-              content: "mock user template\n#{File.read('spec/fixtures/patch_for_review.txt')}"
+              content: "mock user template\n#{mock_patch_content_for_review}"
             }
           ]
           expect(mock_llm_prompter).to have_received(:chat).with(expected_messages)
           expect(@llm_validator.validation_errors.count).to eq(0)
           expect(@llm_validator).not_to have_received(:warn)
+        end
+
+        it "Replace all placeholders in the prompt templates" do
+          all_placeholders = "{{CHECKS}}\n" \
+            "{{JSON_FORMAT}}\n" \
+            "{{FILE_PATH}}\n" \
+            "{{CONTENT}}"
+          @llm_validator.system_prompt_template = all_placeholders
+          @llm_validator.user_prompt_template = all_placeholders
+
+          allow(mock_llm_prompter).to receive(:chat).and_return(mock_llm_response_without_comments)
+
+          @llm_validator.check
+
+          expected_prompt = "  1. Ensure proper code comments\n" \
+            "#{PromptBuilder::JSON_FORMAT}\n" \
+            "#{mock_test_file_new_path}\n" \
+            "#{mock_patch_content_for_review}"
+
+          expected_messages = [
+            {
+              role: "system",
+              content: expected_prompt
+            },
+            {
+              role: "user",
+              content: expected_prompt
+            }
+          ]
+          expect(mock_llm_prompter).to have_received(:chat).with(expected_messages)
         end
       end
     end
