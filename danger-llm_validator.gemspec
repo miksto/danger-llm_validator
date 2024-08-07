@@ -16,12 +16,13 @@ Gem::Specification.new do |spec|
 
   spec.files         = `git ls-files`.split($/)
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
-  spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "danger-plugin-api", "~> 1.0"
-  spec.add_runtime_dependency "ruby-openai", "~> 7.1"
-  spec.add_runtime_dependency "ffi", "1.16.3"
+  spec.required_ruby_version = ">=3.0.0"
+
+  spec.add_dependency "danger-plugin-api", "~> 1.0"
+  spec.add_dependency "ffi", "1.16.3"
+  spec.add_dependency "ruby-openai", "~> 7.1"
 
   # General ruby development
   spec.add_development_dependency "bundler", "~> 2.0"
@@ -49,4 +50,5 @@ Gem::Specification.new do |spec|
   #
   # This will stop test execution and let you inspect the results
   spec.add_development_dependency "pry"
+  spec.metadata["rubygems_mfa_required"] = "true"
 end
