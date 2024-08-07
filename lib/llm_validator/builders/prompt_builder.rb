@@ -32,15 +32,15 @@ module Danger
 
     private
 
-    JSON_FORMAT = "{\n" \
-      "  \"comments\": [\n" \
-      "    {\n" \
-      "      \"line_number\": 1,\n" \
-      "      \"line_content\": \"line content\",\n" \
-      "      \"comment\": \"description of issue and suggested fix\"\n" \
-      "    }\n" \
-      "  ]\n" \
-      "}"
+    JSON_FORMAT = "{\n  " \
+                  "\"comments\": [\n    " \
+                  "{\n      " \
+                  "\"line_number\": 1,\n      " \
+                  "\"line_content\": \"line content\",\n      " \
+                  "\"comment\": \"description of issue and suggested fix\"\n    " \
+                  "}\n  " \
+                  "]\n" \
+                  "}"
 
     def replace_placeholders(template:, file_path:, content:)
       checks_string = checks.map.with_index(1) { |check, index| "  #{index}. #{check}" }.join("\n")

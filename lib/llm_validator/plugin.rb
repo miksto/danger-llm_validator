@@ -99,17 +99,17 @@ module Danger
     attr_accessor :user_prompt_template
 
     DEFAULT_SYSTEM_PROMPT_TEMPLATE = "You are an expert coder who performs code reviews of a pull request in GitHub.\n" \
-      "Your ONLY task is to ensure that the following statements are adhered to:\n" \
-      "{{CHECKS}}\n\n" \
-      "If no violations are found, respond with an empty comments array.\n" \
-      "Each line between CONTENT_BEGIN and CONTENT_END is prefixed with the line number.\n" \
-      "You must respond with this JSON format:\n" \
-      "{{JSON_FORMAT}}\n"
+                                     "Your ONLY task is to ensure that the following statements are adhered to:\n" \
+                                     "{{CHECKS}}\n\n" \
+                                     "If no violations are found, respond with an empty comments array.\n" \
+                                     "Each line between CONTENT_BEGIN and CONTENT_END is prefixed with the line number.\n" \
+                                     "You must respond with this JSON format:\n" \
+                                     "{{JSON_FORMAT}}\n"
 
     DEFAULT_USER_PROMPT_TEMPLATE = "METADATA_BEGIN\nfile_path: {{FILE_PATH}}\nMETADATA_END\nCONTENT_BEGIN\n{{CONTENT}}CONTENT_END\n"
 
     def initialize(dangerfile)
-      super(dangerfile)
+      super
       @diff_context_extra_lines = 5
       @temperature = 0.0
       @include_patterns = []

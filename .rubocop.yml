@@ -4,6 +4,8 @@
 
 AllCops:
   TargetRubyVersion: 3.0
+  SuggestExtensions: false
+  NewCops: enable
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
@@ -107,6 +109,9 @@ Style/Documentation:
 
 # Adds complexity
 Style/IfInsideElse:
+  Enabled: false
+
+Gemspec/DevelopmentDependencies:
   Enabled: false
 
 # danger specific
