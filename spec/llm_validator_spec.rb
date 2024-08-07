@@ -61,9 +61,9 @@ module Danger
 
         it "Replace all placeholders in the prompt templates" do
           all_placeholders = "{{CHECKS}}\n" \
-            "{{JSON_FORMAT}}\n" \
-            "{{FILE_PATH}}\n" \
-            "{{CONTENT}}"
+                             "{{JSON_FORMAT}}\n" \
+                             "{{FILE_PATH}}\n" \
+                             "{{CONTENT}}"
           @llm_validator.system_prompt_template = all_placeholders
           @llm_validator.user_prompt_template = all_placeholders
 
@@ -72,9 +72,9 @@ module Danger
           @llm_validator.check
 
           expected_prompt = "  1. Ensure proper code comments\n" \
-            "#{PromptBuilder::JSON_FORMAT}\n" \
-            "#{mock_test_file_path}\n" \
-            "#{mock_patch_content_for_review}"
+                            "#{PromptBuilder::JSON_FORMAT}\n" \
+                            "#{mock_test_file_path}\n" \
+                            "#{mock_patch_content_for_review}"
 
           expected_messages = [
             {
@@ -198,9 +198,9 @@ module Danger
 
         it "Replace all placeholders in the prompt templates" do
           all_placeholders = "{{CHECKS}}\n" \
-            "{{JSON_FORMAT}}\n" \
-            "{{FILE_PATH}}\n" \
-            "{{CONTENT}}"
+                             "{{JSON_FORMAT}}\n" \
+                             "{{FILE_PATH}}\n" \
+                             "{{CONTENT}}"
           @llm_validator.system_prompt_template = all_placeholders
           @llm_validator.user_prompt_template = all_placeholders
 
@@ -209,9 +209,9 @@ module Danger
           @llm_validator.check
 
           expected_prompt = "  1. Ensure proper code comments\n" \
-            "#{PromptBuilder::JSON_FORMAT}\n" \
-            "#{mock_test_file_new_path}\n" \
-            "#{mock_patch_content_for_review}"
+                            "#{PromptBuilder::JSON_FORMAT}\n" \
+                            "#{mock_test_file_new_path}\n" \
+                            "#{mock_patch_content_for_review}"
 
           expected_messages = [
             {
