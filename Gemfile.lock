@@ -3,7 +3,7 @@ PATH
   specs:
     danger-llm_validator (0.1.0)
       danger-plugin-api (~> 1.0)
-      ffi (= 1.16.3)
+      ffi (= 1.17.0)
       ruby-openai (~> 7.1)
 
 GEM
@@ -46,7 +46,7 @@ GEM
       multipart-post (~> 2)
     faraday-net_http (3.1.1)
       net-http
-    ffi (1.16.3)
+    ffi (1.17.0)
     formatador (1.1.0)
     git (1.19.1)
       addressable (~> 2.8)
