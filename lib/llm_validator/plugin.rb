@@ -147,6 +147,8 @@ module Danger
     # Creates warnings for all comments received from the LLM.
     # @return [void]
     def check
+      return if checks.nil?
+
       self.llm_responses = []
       self.validation_errors = []
 
