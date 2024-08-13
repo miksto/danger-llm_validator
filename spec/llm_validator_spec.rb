@@ -66,15 +66,40 @@ module Danger
                              "{{CONTENT}}"
           @llm_validator.system_prompt_template = all_placeholders
           @llm_validator.user_prompt_template = all_placeholders
+          @llm_validator.json_format = "test_json_format"
 
           allow(mock_llm_prompter).to receive(:chat).and_return(mock_llm_response_without_comments)
 
           @llm_validator.check
 
           expected_prompt = "  1. Ensure proper code comments\n" \
-                            "#{PromptBuilder::JSON_FORMAT}\n" \
+                            "test_json_format\n" \
                             "#{mock_test_file_path}\n" \
                             "#{mock_patch_content_for_review}"
+
+          expected_messages = [
+            {
+              role: "system",
+              content: expected_prompt
+            },
+            {
+              role: "user",
+              content: expected_prompt
+            }
+          ]
+          expect(mock_llm_prompter).to have_received(:chat).with(expected_messages)
+        end
+
+        it "Default json format is applied in prompts" do
+          prompt_template = "{{JSON_FORMAT}}\n"
+          @llm_validator.system_prompt_template = prompt_template
+          @llm_validator.user_prompt_template = prompt_template
+
+          allow(mock_llm_prompter).to receive(:chat).and_return(mock_llm_response_without_comments)
+
+          @llm_validator.check
+
+          expected_prompt = "#{DangerLlmValidator::DEFAULT_JSON_FORMAT}\n"
 
           expected_messages = [
             {
@@ -203,13 +228,14 @@ module Danger
                              "{{CONTENT}}"
           @llm_validator.system_prompt_template = all_placeholders
           @llm_validator.user_prompt_template = all_placeholders
+          @llm_validator.json_format = "test_json_format"
 
           allow(mock_llm_prompter).to receive(:chat).and_return(mock_llm_response_without_comments)
 
           @llm_validator.check
 
           expected_prompt = "  1. Ensure proper code comments\n" \
-                            "#{PromptBuilder::JSON_FORMAT}\n" \
+                            "test_json_format\n" \
                             "#{mock_test_file_new_path}\n" \
                             "#{mock_patch_content_for_review}"
 

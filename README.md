@@ -57,10 +57,12 @@ Includes extra data such as file paths and the prompt supplied to the LLM as wel
 `warn_for_llm_comments` - Whether a warning should be posted for comments received from the LLM. Defaults to true.
 
 `system_prompt_template` - Allows you to customize the system prompt for the LLM. Typically used to set overall behavior, tone, and rules for how the AI model.
-Supported place holders are `{{CHECKS}}`, `{{JSON_FORMAT}}`, `{{FILE_PATH}}` and `{{CONTENT}}`.
+Supported place holders are `{{CHECKS}}`, `{{JSON_FORMAT}}`, `{{FILE_PATH}}`, `{{CONTENT}}` and `{{JSON_FORMAT}}`.
 
 `user_prompt_template` - Allows you to customize the user prompt for the LLM. Typically used to provide a specific input or question to the AI.
-Supported place holders are `{{CHECKS}}`, `{{JSON_FORMAT}}`, `{{FILE_PATH}}` and `{{CONTENT}}`.
+Supported place holders are `{{CHECKS}}`, `{{JSON_FORMAT}}`, `{{FILE_PATH}}`, `{{CONTENT}}` and `{{JSON_FORMAT}}`.
+
+`json_format` - Allows you to customize how the required JSON format is presented to the LLM.
 
 
 
@@ -98,8 +100,21 @@ The default values for the prompts are as follows:
       "You must respond with this JSON format:\n" \
       "{{JSON_FORMAT}}\n"
 
-#### Default User Prompt Template
+#### Default User Prompt Template 
+
     DEFAULT_USER_PROMPT_TEMPLATE = "METADATA_BEGIN\nfile_path: {{FILE_PATH}}\nMETADATA_END\nCONTENT_BEGIN\n{{CONTENT}}CONTENT_END\n"
+
+#### Default json format
+
+    {
+        "comments": [
+            {
+                "line_number": 1,
+                "line_content": "line content",
+                "comment": "description of issue and suggested fix.",
+            }
+        ]
+    }
 
 By setting any of `system_prompt_template` and `user_prompt_template` to `nil` you can exclude that message from the prompt.
 
