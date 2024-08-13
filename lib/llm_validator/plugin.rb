@@ -87,16 +87,21 @@ module Danger
     attr_accessor :warn_for_llm_comments
 
     # Allows you to customize the system prompt for the LLM. Typically used to set overall behavior, tone, and rules for how the AI model.
-    # Supported place holders are `{{CHECKS}}`, `{{JSON_FORMAT}}`, `{{FILE_PATH}}` and `{{CONTENT}}`.
+    # Supported place holders are `{{CHECKS}}`, `{{JSON_FORMAT}}`, `{{FILE_PATH}}`, `{{CONTENT}}` and `{{JSON_FORMAT}}`.
     #
     # @return [String]
     attr_accessor :system_prompt_template
 
     # Allows you to customize the user prompt for the LLM. Typically used to provide a specific input or question to the AI.
-    # Supported place holders are `{{CHECKS}}`, `{{JSON_FORMAT}}`, `{{FILE_PATH}}` and `{{CONTENT}}`.
+    # Supported place holders are `{{CHECKS}}`, `{{JSON_FORMAT}}`, `{{FILE_PATH}}`, `{{CONTENT}}` and `{{JSON_FORMAT}}`.
     #
     # @return [String]
     attr_accessor :user_prompt_template
+
+    # Allows you to customize how the required JSON format is presented to the LLM.
+    #
+    # @return [String]
+    attr_accessor :json_format
 
     DEFAULT_SYSTEM_PROMPT_TEMPLATE = "You are an expert coder who performs code reviews of a pull request in GitHub.\n" \
                                      "Your ONLY task is to ensure that the following statements are adhered to:\n" \
@@ -108,6 +113,16 @@ module Danger
 
     DEFAULT_USER_PROMPT_TEMPLATE = "METADATA_BEGIN\nfile_path: {{FILE_PATH}}\nMETADATA_END\nCONTENT_BEGIN\n{{CONTENT}}CONTENT_END\n"
 
+    DEFAULT_JSON_FORMAT = "{\n  " \
+                          "\"comments\": [\n    " \
+                          "{\n      " \
+                          "\"line_number\": 1,\n      " \
+                          "\"line_content\": \"line content\",\n      " \
+                          "\"comment\": \"description of issue and suggested fix\"\n    " \
+                          "}\n  " \
+                          "]\n" \
+                          "}"
+
     def initialize(dangerfile)
       super
       @diff_context_extra_lines = 5
@@ -118,6 +133,7 @@ module Danger
       @warn_for_llm_comments = true
       @system_prompt_template = DEFAULT_SYSTEM_PROMPT_TEMPLATE
       @user_prompt_template = DEFAULT_USER_PROMPT_TEMPLATE
+      @json_format = DEFAULT_JSON_FORMAT
     end
 
     # Configure the OpenAI library to connect to the desired API endpoints etc.
@@ -143,7 +159,8 @@ module Danger
       prompt_builder = PromptBuilder.new(
         checks: checks,
         system_prompt_template: system_prompt_template,
-        user_prompt_template: user_prompt_template
+        user_prompt_template: user_prompt_template,
+        json_format: json_format
       )
       llm_prompter = LlmPrompter.new(llm_model: llm_model, temperature: temperature)
 
