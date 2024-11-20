@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">=3.0.0"
 
   spec.add_dependency "danger-plugin-api", "~> 1.0"
-  spec.add_dependency "ffi", "1.16.3"
+  spec.add_dependency "ffi", "1.17.0"
   spec.add_dependency "ruby-openai", "~> 7.1"
 
   # General ruby development
